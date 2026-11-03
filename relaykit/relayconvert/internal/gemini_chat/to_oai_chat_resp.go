@@ -172,7 +172,7 @@ func ResponseGeminiChat2OpenAI(id string, created int64, response *dto.GeminiCha
 			switch *candidate.FinishReason {
 			case "STOP":
 				choice.FinishReason = types.FinishReasonStop
-			case "MAX_TOKENS":
+			case "MAX_TOKENS", "CONTINUATION":
 				choice.FinishReason = types.FinishReasonLength
 			case "SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT", "SPII", "OTHER":
 				choice.FinishReason = types.FinishReasonContentFilter
@@ -233,7 +233,7 @@ func streamResponseGeminiChat2OpenAI(geminiResponse *dto.GeminiChatResponse) (*d
 			switch *candidate.FinishReason {
 			case "STOP":
 				choice.FinishReason = &types.FinishReasonStop
-			case "MAX_TOKENS":
+			case "MAX_TOKENS", "CONTINUATION":
 				choice.FinishReason = &types.FinishReasonLength
 			case "SAFETY", "RECITATION", "BLOCKLIST", "PROHIBITED_CONTENT", "SPII", "OTHER":
 				choice.FinishReason = &types.FinishReasonContentFilter
