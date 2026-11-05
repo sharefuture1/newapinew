@@ -40,6 +40,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
+import { useWendingNavItems } from '@/features/wending/nav'
 import { ROLE } from '@/lib/roles'
 
 /**
@@ -50,6 +51,7 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
+  const wendingNav = useWendingNavItems() // wending: fork-local entries
 
   return {
     navGroups: [
@@ -126,6 +128,7 @@ export function useSidebarData(): SidebarData {
             url: '/security',
             icon: ShieldCheck,
           },
+          ...wendingNav.personal,
         ],
       },
       {
@@ -176,6 +179,7 @@ export function useSidebarData(): SidebarData {
             icon: Settings,
             requiredRole: ROLE.SUPER_ADMIN,
           },
+          ...wendingNav.admin,
         ],
       },
     ],
