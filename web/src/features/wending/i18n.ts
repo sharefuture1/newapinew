@@ -211,8 +211,11 @@ const zhTW: typeof en = {
 
 const bundles: Record<string, typeof en> = { en, zhCN, zhTW }
 
-for (const [lng, wending] of Object.entries(bundles)) {
-  i18n.addResourceBundle(lng, 'translation', { wending }, true, false)
+// Unit tests mock i18next with a partial object; skip registration there.
+if (typeof i18n.addResourceBundle === 'function') {
+  for (const [lng, wending] of Object.entries(bundles)) {
+    i18n.addResourceBundle(lng, 'translation', { wending }, true, false)
+  }
 }
 
 export {}
