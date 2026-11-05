@@ -40,6 +40,7 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarBadges, SidebarData } from '@/components/layout/types'
+import { useWendingNavItems } from '@/features/wending/nav'
 import { ROLE } from '@/lib/roles'
 
 /**
@@ -50,6 +51,7 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(badges: SidebarBadges = {}): SidebarData {
   const { t } = useTranslation()
+  const wendingNav = useWendingNavItems() // wending: fork-local entries
 
   return {
     navGroups: [
@@ -126,6 +128,7 @@ export function useSidebarData(badges: SidebarBadges = {}): SidebarData {
             url: '/security',
             icon: ShieldCheck,
           },
+          ...wendingNav.personal,
         ],
       },
       {
@@ -178,6 +181,7 @@ export function useSidebarData(badges: SidebarBadges = {}): SidebarData {
             // Model pricing lives in System Settings.
             badge: badges.modelPricing,
           },
+          ...wendingNav.admin,
         ],
       },
     ],
