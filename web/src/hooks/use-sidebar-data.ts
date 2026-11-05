@@ -40,7 +40,10 @@ import {
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
-import { useWendingNavItems } from '@/features/wending/nav'
+import {
+  useWendingAppsNavGroup,
+  useWendingNavItems,
+} from '@/features/wending/nav'
 import { ROLE } from '@/lib/roles'
 
 /**
@@ -52,6 +55,7 @@ import { ROLE } from '@/lib/roles'
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
   const wendingNav = useWendingNavItems() // wending: fork-local entries
+  const wendingApps = useWendingAppsNavGroup()
 
   return {
     navGroups: [
@@ -71,6 +75,7 @@ export function useSidebarData(): SidebarData {
           },
         ],
       },
+      ...(wendingApps ? [wendingApps] : []),
       {
         id: 'general',
         title: t('General'),

@@ -509,6 +509,9 @@ type wendingOAuthClientRequest struct {
 	Description           string   `json:"description"`
 	IconUrl               string   `json:"icon_url"`
 	HomepageUrl           string   `json:"homepage_url"`
+	LaunchUrl             string   `json:"launch_url"`
+	ShowInSidebar         bool     `json:"show_in_sidebar"`
+	SidebarOrder          int      `json:"sidebar_order"`
 	RedirectUris          []string `json:"redirect_uris"`
 	IsPublic              bool     `json:"is_public"`
 	Enabled               bool     `json:"enabled"`
@@ -535,15 +538,21 @@ func applyWendingOAuthClientRequest(client *model.WendingOAuthClient, req wendin
 	if name == "" || len([]rune(name)) > 40 {
 		return errors.New("name is required and must be at most 40 characters")
 	}
-	for _, link := range []string{req.IconUrl, req.HomepageUrl} {
+	for _, link := range []string{req.IconUrl, req.HomepageUrl, req.LaunchUrl} {
 		link = strings.TrimSpace(link)
 		if link == "" {
 			continue
 		}
 		parsed, err := url.Parse(link)
 		if err != nil || (parsed.Scheme != "https" && parsed.Scheme != "http") || parsed.Host == "" || len(link) > 1024 {
-			return errors.New("icon_url and homepage_url must be http(s) URLs")
+			return errors.New("icon_url, homepage_url and launch_url must be http(s) URLs")
 		}
+	}
+	if req.ShowInSidebar && strings.TrimSpace(req.LaunchUrl) == "" {
+		return errors.New("launch_url is required when show_in_sidebar is enabled")
+	}
+	if req.SidebarOrder < -1000000 || req.SidebarOrder > 1000000 {
+		return errors.New("sidebar_order is out of range")
 	}
 	if err := client.SetRedirectURIs(req.RedirectUris); err != nil {
 		return err
@@ -555,6 +564,9 @@ func applyWendingOAuthClientRequest(client *model.WendingOAuthClient, req wendin
 	client.Description = strings.TrimSpace(req.Description)
 	client.IconUrl = strings.TrimSpace(req.IconUrl)
 	client.HomepageUrl = strings.TrimSpace(req.HomepageUrl)
+	client.LaunchUrl = strings.TrimSpace(req.LaunchUrl)
+	client.ShowInSidebar = req.ShowInSidebar
+	client.SidebarOrder = req.SidebarOrder
 	client.IsPublic = req.IsPublic
 	client.Enabled = req.Enabled
 	client.DefaultUnlimitedQuota = req.DefaultUnlimitedQuota && req.AllowUnlimitedQuota
@@ -564,6 +576,29 @@ func applyWendingOAuthClientRequest(client *model.WendingOAuthClient, req wendin
 	client.ModelLimitsEnabled = req.ModelLimitsEnabled
 	client.ModelLimits = strings.TrimSpace(req.ModelLimits)
 	return nil
+}
+
+// GET /api/wending/oauth/sidebar-apps (any logged-in user)
+// Returns the enabled apps the admin marked for the console left sidebar.
+func ListWendingOAuthSidebarApps(c *gin.Context) {
+	clients, err := model.ListWendingOAuthSidebarApps()
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	apps := make([]gin.H, 0, len(clients))
+	for _, client := range clients {
+		apps = append(apps, gin.H{
+			"client_id":     client.ClientId,
+			"name":          client.Name,
+			"description":   client.Description,
+			"icon_url":      client.IconUrl,
+			"homepage_url":  client.HomepageUrl,
+			"launch_url":    client.LaunchUrl,
+			"sidebar_order": client.SidebarOrder,
+		})
+	}
+	common.ApiSuccess(c, apps)
 }
 
 // GET /api/wending/oauth/clients (root)

@@ -12,8 +12,8 @@ See [docs/WENDING_OAUTH.md](docs/WENDING_OAUTH.md).
 
 | Path | Purpose |
 | --- | --- |
-| `model/wending_oauth.go` | Tables `wending_oauth_clients`, `wending_oauth_grants`, `wending_oauth_codes`; secret hashing, PKCE, grant/code lifecycle |
-| `controller/wending_oauth.go` | Consent API, token endpoint, userinfo, user grant management, root client CRUD, admin grant view |
+| `model/wending_oauth.go` | Tables `wending_oauth_clients`, `wending_oauth_grants`, `wending_oauth_codes`; secret hashing, PKCE, grant/code lifecycle; sidebar launch fields (`show_in_sidebar`, `launch_url`, `sidebar_order`) |
+| `controller/wending_oauth.go` | Consent API, token endpoint, userinfo, user grant management, root client CRUD, admin grant view, `GET /sidebar-apps` |
 | `controller/wending_oauth_test.go` | Token-endpoint tests (PKCE, redirect mismatch, code reuse, revoked grant, client auth, rotation, expiry) |
 | `router/wending-oauth-router.go` | `SetWendingOAuthRouter` – every route of the feature |
 | `web/src/features/wending/**` | Consent page, "已授权应用" page, root "接入应用" page, API client, runtime i18n bundle (`wending.*` keys), sidebar items |
@@ -27,8 +27,9 @@ See [docs/WENDING_OAUTH.md](docs/WENDING_OAUTH.md).
 | --- | --- | --- |
 | `model/main.go` | `migrateDB()` calls `migrateWendingOAuth()` right after the main `AutoMigrate` | +3 |
 | `router/main.go` | `SetRouter()` calls `SetWendingOAuthRouter(router)` | +1 |
-| `web/src/hooks/use-sidebar-data.ts` | import `useWendingNavItems`, spread `personal`/`admin` items | +4 |
+| `web/src/hooks/use-sidebar-data.ts` | import `useWendingNavItems` / `useWendingAppsNavGroup`, spread personal/admin items, inject dynamic "问鼎应用" group | +8 |
 | `web/src/hooks/__tests__/sidebar-config.test.tsx` | expected Personal sidebar items now include `wending.nav.authorizedApps` | +6/-1 |
+| `web/src/components/layout/components/nav-group.tsx` | `SidebarMenuLink` opens absolute `http(s)://` URLs in a new tab (sidebar launch apps) | +18 |
 | `web/src/routeTree.gen.ts` | **generated** by the TanStack Router plugin during `bun run build`; never edit by hand – regenerate after a rebase | generated |
 
 Upstream locale JSON files are **not** touched: translations are registered at

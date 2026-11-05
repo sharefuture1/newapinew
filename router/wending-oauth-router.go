@@ -28,6 +28,7 @@ func SetWendingOAuthRouter(router *gin.Engine) {
 		{
 			userRoute.GET("/authorize", controller.GetWendingOAuthAuthorize)
 			userRoute.POST("/authorize", middleware.CriticalRateLimit(), middleware.UserCriticalRateLimit("wending-oauth"), controller.PostWendingOAuthAuthorize)
+			userRoute.GET("/sidebar-apps", controller.ListWendingOAuthSidebarApps)
 			userRoute.GET("/grants", controller.ListSelfWendingOAuthGrants)
 			userRoute.DELETE("/grants/:id", middleware.CriticalRateLimit(), controller.RevokeSelfWendingOAuthGrant)
 		}

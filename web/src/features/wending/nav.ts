@@ -17,13 +17,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 // Wending fork-local sidebar entries, spread into the upstream sidebar groups.
-import { AppWindow, KeyRound } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { AppWindow, ExternalLink, KeyRound } from 'lucide-react'
+import { createElement, type ElementType, type SVGProps } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import type { NavItem } from '@/components/layout/types'
+import type { NavGroup, NavItem } from '@/components/layout/types'
 import { ROLE } from '@/lib/roles'
 
 import './i18n'
+import { listSidebarApps } from './oauth/api'
+
+function makeAppIcon(iconUrl: string): ElementType {
+  if (!iconUrl) return ExternalLink
+  return function AppIcon(props: SVGProps<SVGSVGElement>) {
+    void props
+    return createElement('img', {
+      src: iconUrl,
+      alt: '',
+      className: 'size-4 shrink-0 rounded object-cover',
+      loading: 'lazy',
+      referrerPolicy: 'no-referrer',
+    })
+  }
+}
 
 export function useWendingNavItems(): {
   personal: NavItem[]
@@ -46,5 +63,30 @@ export function useWendingNavItems(): {
         requiredRole: ROLE.SUPER_ADMIN,
       },
     ],
+  }
+}
+
+/** Dynamic "问鼎应用" group: opens each client's launch_url in a new tab. */
+export function useWendingAppsNavGroup(): NavGroup | null {
+  const { t } = useTranslation()
+  const { data } = useQuery({
+    queryKey: ['wending', 'sidebar-apps'],
+    queryFn: async () => {
+      const res = await listSidebarApps()
+      if (!res.success) return []
+      return res.data ?? []
+    },
+    staleTime: 60_000,
+    retry: false,
+  })
+  if (!data?.length) return null
+  return {
+    id: 'wending-apps',
+    title: t('wending.nav.apps'),
+    items: data.map((app) => ({
+      title: app.name,
+      url: app.launch_url,
+      icon: makeAppIcon(app.icon_url),
+    })),
   }
 }

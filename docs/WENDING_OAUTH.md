@@ -57,6 +57,7 @@ client or unregistered redirect_uri is **never** redirected (error shown in new-
 | `POST /api/wending/oauth/authorize` | dashboard **browser session only** (PATs rejected); `CriticalRateLimit` + per-user limit | Approve/deny; returns `redirect_to` |
 | `POST /api/oauth/token` | public, `CriticalRateLimit`; `client_secret_post` or `client_secret_basic` | Exchange code → API key |
 | `GET /api/oauth/userinfo` | `Authorization: Bearer sk-…` (OAuth-issued key only) | User id/name, group, user quota, token quota |
+| `GET /api/wending/oauth/sidebar-apps` | session | Enabled clients with `show_in_sidebar` + non-empty `launch_url` (console left sidebar) |
 | `GET /api/wending/oauth/grants` | session | My authorized apps |
 | `DELETE /api/wending/oauth/grants/:id` | session | Revoke (deletes the key immediately) |
 | `GET /api/wending/oauth/admin/grants?user_id=&include_revoked=true` | admin | Grants of all / one user |
@@ -113,7 +114,20 @@ No key, code, verifier or secret is ever logged (`/api/oauth/token` takes them i
 3. Confidential (default) for server-side apps; tick **公共客户端** only for apps that cannot keep a
    secret (CLI/MCP/desktop) – they still must use PKCE.
 4. Default cap, whether unlimited is allowed, optional pinned group, optional model whitelist.
-5. Save → copy **Client ID** and **Client Secret** (shown once; use 重置密钥 to rotate).
+5. Optional: enable **显示在侧边栏**, set **侧边栏启动地址** (RP login-start URL) and sort order.
+6. Save → copy **Client ID** and **Client Secret** (shown once; use 重置密钥 to rotate).
+
+## Sidebar launch ("问鼎应用")
+
+Registered clients can appear in the logged-in console **left sidebar** under **问鼎应用 / Wending Apps**.
+
+Admin fields on each client (接入应用):
+
+- `show_in_sidebar` – when true (and `enabled`), list the app for every logged-in user
+- `launch_url` – absolute `http(s)` URL opened in a **new tab** on click (required when sidebar is on). This must be the **RP's own login-start URL** (e.g. `https://huabu.wending.ai/api/auth/wending/start` or the app homepage that kicks off login). The authorization server never initiates OAuth itself: the RP must create `state` + PKCE `code_verifier`/`code_challenge` and redirect the browser to `/oauth/authorize`.
+- `sidebar_order` – ascending sort (ties broken by id)
+
+`GET /api/wending/oauth/sidebar-apps` returns `{ client_id, name, description, icon_url, homepage_url, launch_url, sidebar_order }` for matching clients. The frontend builds the sidebar group from that list.
 
 ## Integration example (huabu, Next.js App Router, server-side exchange)
 

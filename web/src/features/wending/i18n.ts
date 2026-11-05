@@ -24,6 +24,7 @@ const en = {
   nav: {
     authorizedApps: 'Authorized Apps',
     oauthClients: 'OAuth Apps',
+    apps: 'Wending Apps',
   },
   oauth: {
     brand: 'Wending AI account authorization',
@@ -77,6 +78,9 @@ const en = {
     description: 'Description',
     iconUrl: 'Icon URL',
     homepageUrl: 'Homepage URL',
+    launchUrl: 'Sidebar launch URL (RP login start)',
+    showInSidebar: 'Show in sidebar',
+    sidebarOrder: 'Sidebar sort order',
     redirectUris: 'Redirect URIs (one per line, exact match)',
     isPublic: 'Public client (PKCE only, no secret)',
     enabled: 'Enabled',
@@ -115,6 +119,7 @@ const zhCN: typeof en = {
   nav: {
     authorizedApps: '已授权应用',
     oauthClients: '接入应用',
+    apps: '问鼎应用',
   },
   oauth: {
     brand: '问鼎AI账号一键授权',
@@ -166,6 +171,9 @@ const zhCN: typeof en = {
     description: '描述',
     iconUrl: '图标 URL',
     homepageUrl: '主页 URL',
+    launchUrl: '侧边栏启动地址（应用发起登录的 URL）',
+    showInSidebar: '显示在侧边栏',
+    sidebarOrder: '侧边栏排序',
     redirectUris: '回调地址（每行一个，精确匹配）',
     isPublic: '公共客户端（仅 PKCE，无密钥）',
     enabled: '启用',
@@ -199,7 +207,7 @@ const zhCN: typeof en = {
 
 const zhTW: typeof en = {
   ...zhCN,
-  nav: { authorizedApps: '已授權應用', oauthClients: '接入應用' },
+  nav: { authorizedApps: '已授權應用', oauthClients: '接入應用', apps: '問鼎應用' },
   oauth: {
     ...zhCN.oauth,
     brand: '問鼎AI帳號一鍵授權',

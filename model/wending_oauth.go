@@ -52,6 +52,12 @@ type WendingOAuthClient struct {
 	Description      string `json:"description" gorm:"type:text"`
 	IconUrl          string `json:"icon_url" gorm:"type:varchar(1024)"`
 	HomepageUrl      string `json:"homepage_url" gorm:"type:varchar(1024)"`
+	// LaunchUrl is the app URL opened from the console sidebar (RP initiates OAuth/PKCE there).
+	LaunchUrl string `json:"launch_url" gorm:"type:varchar(1024)"`
+	// ShowInSidebar lists the app under "问鼎应用" for logged-in users when LaunchUrl is set.
+	ShowInSidebar bool `json:"show_in_sidebar"`
+	// SidebarOrder sorts sidebar apps ascending (ties broken by id ascending).
+	SidebarOrder int `json:"sidebar_order"`
 	// RedirectUris is a JSON array of exact-match redirect URIs.
 	RedirectUris string `json:"-" gorm:"type:text"`
 	// IsPublic marks a PKCE-only client that cannot keep a secret (SPA, CLI, MCP).
@@ -214,6 +220,15 @@ func ListWendingOAuthClients() ([]*WendingOAuthClient, error) {
 	return clients, err
 }
 
+// ListWendingOAuthSidebarApps returns enabled clients flagged for the console sidebar.
+// Only clients with a non-empty launch_url are included. Order: sidebar_order ASC, id ASC.
+func ListWendingOAuthSidebarApps() ([]*WendingOAuthClient, error) {
+	var clients []*WendingOAuthClient
+	err := DB.Where("enabled = ? AND show_in_sidebar = ? AND launch_url <> ?", true, true, "").
+		Order("sidebar_order asc, id asc").Find(&clients).Error
+	return clients, err
+}
+
 func GetWendingOAuthClientById(id int) (*WendingOAuthClient, error) {
 	var client WendingOAuthClient
 	if err := DB.Where("id = ?", id).First(&client).Error; err != nil {
@@ -248,7 +263,8 @@ func (client *WendingOAuthClient) Insert() error {
 // Save persists every editable column, including zero values.
 func (client *WendingOAuthClient) Save() error {
 	client.UpdatedAt = common.GetTimestamp()
-	return DB.Model(client).Select("name", "description", "icon_url", "homepage_url", "redirect_uris",
+	return DB.Model(client).Select("name", "description", "icon_url", "homepage_url", "launch_url",
+		"show_in_sidebar", "sidebar_order", "redirect_uris",
 		"is_public", "enabled", "default_unlimited_quota", "default_remain_quota", "allow_unlimited_quota",
 		"allowed_group", "model_limits_enabled", "model_limits", "client_secret_hash", "updated_at").
 		Updates(client).Error

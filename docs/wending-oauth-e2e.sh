@@ -25,6 +25,15 @@ CLIENT_ID=$(echo "$CLIENT_JSON" | j "d['data']['client']['client_id']")
 CLIENT_SECRET=$(echo "$CLIENT_JSON" | j "d['data']['client_secret']")
 echo "client_id=$CLIENT_ID secret=${CLIENT_SECRET:0:8}…(hidden)"
 
+step "3b. enable sidebar launch + list sidebar-apps"
+CLIENT_DB_ID=$(echo "$CLIENT_JSON" | j "d['data']['client']['id']")
+curl -s -X PUT "$BASE/api/wending/oauth/clients/$CLIENT_DB_ID" \
+  -H "Authorization: Bearer $ROOT_AT" -H 'Content-Type: application/json' \
+  -d "{\"name\":\"WendingAI 创作台\",\"description\":\"e2e\",\"redirect_uris\":[\"$REDIRECT\"],\"enabled\":true,\"is_public\":false,\"allow_unlimited_quota\":true,\"default_remain_quota\":5000000,\"homepage_url\":\"https://huabu.wending.ai/\",\"launch_url\":\"https://huabu.wending.ai/\",\"show_in_sidebar\":true,\"sidebar_order\":10}" \
+  | j "d['success'], d['data']['show_in_sidebar'], d['data']['launch_url']"
+curl -s "$BASE/api/wending/oauth/sidebar-apps" -H "Authorization: Bearer $ROOT_AT" \
+  | j "d['success'], len(d['data']), d['data'][0]['name'], d['data'][0]['launch_url']"
+
 step "4. register + login normal user alice"
 curl -s -X POST $BASE/api/user/register -H 'Content-Type: application/json' \
   -d "{\"username\":\"alice\",\"password\":\"$ALICE_PW\",\"password2\":\"$ALICE_PW\"}" | j "d['success'], d['message']"

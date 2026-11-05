@@ -68,6 +68,7 @@ func setupWendingOAuthTest(t *testing.T, isPublic bool) *wendingOAuthTestEnv {
 	}
 	router.GET("/api/wending/oauth/authorize", session, GetWendingOAuthAuthorize)
 	router.POST("/api/wending/oauth/authorize", session, PostWendingOAuthAuthorize)
+	router.GET("/api/wending/oauth/sidebar-apps", session, ListWendingOAuthSidebarApps)
 	router.DELETE("/api/wending/oauth/grants/:id", session, RevokeSelfWendingOAuthGrant)
 	router.POST("/api/oauth/token", PostWendingOAuthToken)
 	router.GET("/api/oauth/userinfo", GetWendingOAuthUserInfo)
@@ -297,4 +298,50 @@ func TestWendingRedirectURIValidation(t *testing.T) {
 	for _, bad := range []string{"http://huabu.wending.ai/cb", "https://a.com/cb#frag", "javascript:alert(1)", "/relative", "myapp:/cb"} {
 		require.Error(t, model.ValidateWendingRedirectURI(bad), bad)
 	}
+}
+
+func TestWendingOAuthSidebarApps(t *testing.T) {
+	env := setupWendingOAuthTest(t, false)
+
+	// Default client is not shown in the sidebar.
+	req := httptest.NewRequest(http.MethodGet, "/api/wending/oauth/sidebar-apps", nil)
+	rec, body := env.do(req)
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, true, body["success"])
+	require.Len(t, body["data"].([]any), 0)
+
+	// show_in_sidebar without launch_url must be rejected by apply.
+	err := applyWendingOAuthClientRequest(env.client, wendingOAuthClientRequest{
+		Name: "Huabu", RedirectUris: []string{wendingTestRedirect}, Enabled: true, ShowInSidebar: true,
+	})
+	require.Error(t, err)
+
+	env.client.ShowInSidebar = true
+	env.client.LaunchUrl = "https://huabu.wending.ai/"
+	env.client.SidebarOrder = 10
+	require.NoError(t, env.client.Save())
+
+	hidden := &model.WendingOAuthClient{Name: "hidden", ClientId: "wd_hidden0000000000000000",
+		Enabled: true, ShowInSidebar: false, LaunchUrl: "https://example.com/"}
+	require.NoError(t, hidden.SetRedirectURIs([]string{wendingTestRedirect}))
+	require.NoError(t, hidden.Insert())
+
+	disabled := &model.WendingOAuthClient{Name: "disabled", ClientId: "wd_disabled0000000000000",
+		Enabled: false, ShowInSidebar: true, LaunchUrl: "https://example.com/x", SidebarOrder: 1}
+	require.NoError(t, disabled.SetRedirectURIs([]string{wendingTestRedirect}))
+	require.NoError(t, disabled.Insert())
+
+	earlier := &model.WendingOAuthClient{Name: "earlier", ClientId: "wd_earlier00000000000000",
+		Enabled: true, ShowInSidebar: true, LaunchUrl: "https://earlier.example/", SidebarOrder: 5}
+	require.NoError(t, earlier.SetRedirectURIs([]string{wendingTestRedirect}))
+	require.NoError(t, earlier.Insert())
+
+	rec, body = env.do(httptest.NewRequest(http.MethodGet, "/api/wending/oauth/sidebar-apps", nil))
+	require.Equal(t, http.StatusOK, rec.Code)
+	apps := body["data"].([]any)
+	require.Len(t, apps, 2)
+	require.Equal(t, "earlier", apps[0].(map[string]any)["name"])
+	require.Equal(t, "https://earlier.example/", apps[0].(map[string]any)["launch_url"])
+	require.Equal(t, "WendingAI 创作台", apps[1].(map[string]any)["name"])
+	require.Equal(t, "https://huabu.wending.ai/", apps[1].(map[string]any)["launch_url"])
 }

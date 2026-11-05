@@ -81,6 +81,16 @@ export interface WendingOAuthGrantView {
   group: string
 }
 
+export interface WendingOAuthSidebarApp {
+  client_id: string
+  name: string
+  description: string
+  icon_url: string
+  homepage_url: string
+  launch_url: string
+  sidebar_order: number
+}
+
 export interface WendingOAuthClient {
   id: number
   client_id: string
@@ -88,6 +98,9 @@ export interface WendingOAuthClient {
   description: string
   icon_url: string
   homepage_url: string
+  launch_url: string
+  show_in_sidebar: boolean
+  sidebar_order: number
   redirect_uris: string[]
   is_public: boolean
   enabled: boolean

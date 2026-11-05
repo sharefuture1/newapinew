@@ -73,6 +73,9 @@ const EMPTY_INPUT: WendingOAuthClientInput = {
   description: '',
   icon_url: '',
   homepage_url: '',
+  launch_url: '',
+  show_in_sidebar: false,
+  sidebar_order: 0,
   redirect_uris: [],
   is_public: false,
   enabled: true,
@@ -105,6 +108,7 @@ function ClientForm({
       | 'description'
       | 'icon_url'
       | 'homepage_url'
+      | 'launch_url'
       | 'allowed_group'
       | 'model_limits',
     label: string
@@ -122,6 +126,7 @@ function ClientForm({
     key:
       | 'is_public'
       | 'enabled'
+      | 'show_in_sidebar'
       | 'allow_unlimited_quota'
       | 'default_unlimited_quota'
       | 'model_limits_enabled',
@@ -141,6 +146,19 @@ function ClientForm({
       {text('description', t('wending.clients.description'))}
       {text('icon_url', t('wending.clients.iconUrl'))}
       {text('homepage_url', t('wending.clients.homepageUrl'))}
+      {text('launch_url', t('wending.clients.launchUrl'))}
+      {toggle('show_in_sidebar', t('wending.clients.showInSidebar'))}
+      <div className='space-y-1'>
+        <Label htmlFor='wending-sidebar-order'>
+          {t('wending.clients.sidebarOrder')}
+        </Label>
+        <Input
+          id='wending-sidebar-order'
+          type='number'
+          value={input.sidebar_order}
+          onChange={(e) => set('sidebar_order', Number(e.target.value) || 0)}
+        />
+      </div>
       <div className='space-y-1'>
         <Label htmlFor='wending-redirects'>
           {t('wending.clients.redirectUris')}
@@ -318,6 +336,11 @@ export function WendingOAuthClientsPage() {
                       {t('wending.clients.disabled')}
                     </Badge>
                   ) : null}
+                  {client.show_in_sidebar ? (
+                    <Badge variant='secondary'>
+                      {t('wending.clients.showInSidebar')}
+                    </Badge>
+                  ) : null}
                 </CardTitle>
                 <CardDescription>{client.description}</CardDescription>
               </CardHeader>
@@ -353,6 +376,9 @@ export function WendingOAuthClientsPage() {
                           description: client.description,
                           icon_url: client.icon_url,
                           homepage_url: client.homepage_url,
+                          launch_url: client.launch_url,
+                          show_in_sidebar: client.show_in_sidebar,
+                          sidebar_order: client.sidebar_order,
                           redirect_uris: client.redirect_uris,
                           is_public: client.is_public,
                           enabled: client.enabled,

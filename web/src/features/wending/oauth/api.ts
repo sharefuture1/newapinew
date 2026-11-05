@@ -25,6 +25,7 @@ import type {
   WendingOAuthClient,
   WendingOAuthClientInput,
   WendingOAuthGrantView,
+  WendingOAuthSidebarApp,
 } from './types'
 
 const BASE = '/api/wending/oauth'
@@ -49,6 +50,14 @@ export async function submitAuthorize(
   const res = await api.post<
     WendingApiResponse<{ redirect_to: string; rotated?: boolean }>
   >(`${BASE}/authorize`, body, quiet)
+  return res.data
+}
+
+export async function listSidebarApps() {
+  const res = await api.get<WendingApiResponse<WendingOAuthSidebarApp[]>>(
+    `${BASE}/sidebar-apps`,
+    quiet
+  )
   return res.data
 }
 
