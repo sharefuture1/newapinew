@@ -50,3 +50,21 @@ channel calls (e2e uses `/v1/models` with no channels configured), mobile layout
 5. MCP server: register as a **public** client with a loopback or reverse-domain redirect URI.
 6. When upgrading production to rc.48+: rebase `wending` (see WENDING_PATCHES.md), rebuild web so `routeTree.gen.ts` regenerates.
 7. Optional hardening: per-client consent "remember" UX, refresh/rotation API for apps, i18n for fr/ru/ja/vi (falls back to English).
+
+## Production deployment record — 2026-11-05
+
+- Server: vultr-sv (104.238.180.145), https://api.wending.ai, service `new-api`
+- Deployed: 2026-11-05 13:14 UTC (08:14 America/New_York); binary built from `5c0cbe3`, reports `v1.0.0-rc.45-wending-5c0cbe3`
+- sha256: `3a19e964f4e1a5d04f3fbab5994890f23f65b93a081e26653396b61d4789e34b`
+- Previous binary (v1.0.0-rc.45, sha256 `0eb9bcda72b25f840226d2493f2ef1074471fa511298213bca89672add7ceee9`): `/opt/new-api/new-api.bak-20261105-131408`
+- DB backup (pg_dump -Fc, 4.5 MB): `/opt/new-api/db-backup-20261105-131408-pre-wending.dump`
+- Restart: stop took ~44s (graceful shutdown), ~47s total until healthy.
+- Auto-migrated tables: wending_oauth_clients, wending_oauth_grants, wending_oauth_codes
+- Verified: /api/status success, /oauth/authorize 200, /api/oauth/token bogus → 401 invalid_client, /api/pricing anon 401, /v1/models no key 401.
+
+Rollback:
+```
+install -m 0755 /opt/new-api/new-api.bak-20261105-131408 /opt/new-api/new-api && systemctl restart new-api
+# (new wending_oauth_* tables are additive and can stay; DB restore only if needed:
+#  pg_restore --clean -d "$SQL_DSN" /opt/new-api/db-backup-20261105-131408-pre-wending.dump)
+```
