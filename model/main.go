@@ -380,6 +380,9 @@ func migrateDB() error {
 	if err != nil {
 		return err
 	}
+	if err := migrateWendingOAuth(); err != nil { // wending: fork-local tables
+		return err
+	}
 	if err := InitializeUserAuthVersions(); err != nil {
 		return err
 	}
