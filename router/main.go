@@ -14,6 +14,7 @@ import (
 
 func SetRouter(router *gin.Engine, assets WebAssets) {
 	SetApiRouter(router)
+	SetWendingOAuthRouter(router) // wending: fork-local OAuth server routes
 	SetDashboardRouter(router)
 	SetRelayRouter(router)
 	SetTaskPluginProtocolRouter(router)
