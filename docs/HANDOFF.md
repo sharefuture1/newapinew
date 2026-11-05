@@ -74,5 +74,30 @@ _Last updated: 2026-11-05 08:30 EST (America/New_York)_
 
 ## Production deployment record — 2026-11-05 (sidebar launch)
 
-_Filled in after deploy._
+- Server: vultr-sv, https://api.wending.ai, service `new-api`
+- Deployed: 2026-11-05 13:25–13:26 UTC (08:25–08:26 America/New_York); ~20s restart
+  (stop→healthy). Binary `2c8eae5`, reports `v1.0.0-rc.45-wending-2c8eae5`
+- sha256: `36e8de3d7111461f75c69b95038c5a5b0affe03b894cf73c0ad98bc25f6bc4bc`
+- Previous binary (5c0cbe3): `/opt/new-api/new-api.bak-20261105-132552`
+- DB backup: `/opt/new-api/db-backup-20261105-132552-pre-sidebar.dump`
+- AutoMigrate added columns: `launch_url`, `show_in_sidebar`, `sidebar_order`
+- Verified: `/api/status` success + version, `/oauth/authorize` 200,
+  `/api/oauth/token` bogus → 401 invalid_client, `/api/pricing` anon 401,
+  `/api/wending/oauth/sidebar-apps` anon 401, logs clean
+- **Huabu client** registered:
+  - client_id: `wd_IHtyFqxBDKBrOJIkoS5Gh8FQ`
+  - name: `WendingAI 创作台`
+  - redirect: `https://huabu.wending.ai/api/auth/wending/callback`
+  - launch_url: `https://huabu.wending.ai/`
+  - show_in_sidebar: true, sidebar_order: 10
+  - secret file (root only, chmod 600): `/opt/new-api/oauth-clients/huabu.secret`
+  - Sidebar list for a logged-in user was not live-checked (no prod user credentials used);
+    DB row matches the list filter (`enabled` + `show_in_sidebar` + non-empty `launch_url`)
+
+Rollback:
+```
+install -m 0755 /opt/new-api/new-api.bak-20261105-132552 /opt/new-api/new-api && systemctl restart new-api
+# additive columns can stay; restore dump only if needed:
+#  pg_restore --clean -d "$SQL_DSN" /opt/new-api/db-backup-20261105-132552-pre-sidebar.dump
+```
 
