@@ -56,7 +56,7 @@ client or unregistered redirect_uri is **never** redirected (error shown in new-
 | `GET /api/wending/oauth/authorize` | dashboard session | Validate request, return client info, user groups, existing grant |
 | `POST /api/wending/oauth/authorize` | dashboard **browser session only** (PATs rejected); `CriticalRateLimit` + per-user limit | Approve/deny; returns `redirect_to` |
 | `POST /api/oauth/token` | public, `CriticalRateLimit`; `client_secret_post` or `client_secret_basic` | Exchange code → API key |
-| `GET /api/oauth/userinfo` | `Authorization: Bearer sk-…` (OAuth-issued key only) | User id/name, group, user quota, token quota |
+| `GET /api/oauth/userinfo` | `Authorization: Bearer sk-…` (OAuth-issued key only) or `Bearer wdat_…` (sign-in token) | `sk-`: user id/name, group, user quota, token quota. `wdat_`: identity only (see *Sign-in scope*) |
 | `GET /api/wending/oauth/sidebar-apps` | session | Enabled clients with `show_in_sidebar` + non-empty `launch_url` (console left sidebar) |
 | `GET /api/wending/oauth/grants` | session | My authorized apps |
 | `DELETE /api/wending/oauth/grants/:id` | session | Revoke (deletes the key immediately) |
@@ -79,6 +79,46 @@ Errors use RFC 6749 §5.2: `400 {"error":"invalid_grant"|"invalid_request"|"unsu
 `base_url` is the **服务器地址 (ServerAddress)** system setting – make sure it is
 set to the public new-api URL in production (系统设置 → 站点/通用), otherwise it
 falls back to `http://localhost:3000`.
+
+## Sign-in scope (`login`) – first-party one-click login
+
+Used by the WendingAI shop (shop.wending.ai) to let users sign in with their WendingAI account
+**without** creating an API key.
+
+| Scope | Meaning |
+| --- | --- |
+| `api` | (default) issue an `sk-` API key – unchanged behaviour |
+| `profile` | basic profile, combinable with either |
+| `login` | sign-in only: no API key, no quota questions; the code is exchanged for a short-lived `wdat_` access token |
+| `email` | include the account e-mail in userinfo; **requires `login`** |
+
+Rules: `login` and `api` cannot be requested together (`invalid_scope`). A grant created for
+`login` has `token_id = 0`; if the same user later authorizes `api` for the same client, scopes
+are merged and the existing key policy applies.
+
+Token response for a login-scope code:
+
+```json
+{ "access_token": "wdat_…", "token_type": "Bearer", "expires_in": 600, "scope": "login email", "user_id": 42 }
+```
+
+`wdat_` tokens live 10 minutes, only their SHA-256 is stored (`wending_oauth_access_tokens`),
+they are **not** accepted by `/v1/*`, and they die with the grant (revoke / client delete).
+
+`GET /api/oauth/userinfo` with `Bearer wdat_…`:
+
+```json
+{ "sub": "42", "user_id": 42, "username": "alice", "display_name": "Alice",
+  "client_id": "wd_…", "scope": "login email", "email": "a@example.com", "email_verified": false }
+```
+
+`email_verified` is always `false` (new-api does not guarantee verified e-mail) – relying
+parties must link accounts by `sub`/`user_id`, never by e-mail.
+
+**Trusted clients.** A client with `trusted = true` (root sets it on 接入应用) skips the consent
+screen for login-only requests: the SPA auto-approves and redirects back (audit
+`wending_oauth.login_authorize`). Untrusted clients show a small "sign in to <app>" consent card.
+API-key (`api`) requests always show the full consent screen, trusted or not.
 
 ## Grant & key policy
 

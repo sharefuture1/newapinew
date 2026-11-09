@@ -70,8 +70,11 @@ type WendingOAuthClient struct {
 	AllowedGroup          string `json:"allowed_group" gorm:"type:varchar(64)"` // empty: user's own group / user choice
 	ModelLimitsEnabled    bool   `json:"model_limits_enabled"`
 	ModelLimits           string `json:"model_limits" gorm:"type:text"`
-	CreatedAt             int64  `json:"created_at" gorm:"bigint"`
-	UpdatedAt             int64  `json:"updated_at" gorm:"bigint"`
+	// Trusted marks a first-party client whose sign-in-only ("login" scope)
+	// requests skip the consent screen. API-key grants always need consent.
+	Trusted   bool  `json:"trusted"`
+	CreatedAt int64 `json:"created_at" gorm:"bigint"`
+	UpdatedAt int64 `json:"updated_at" gorm:"bigint"`
 }
 
 func (WendingOAuthClient) TableName() string { return "wending_oauth_clients" }
@@ -110,7 +113,7 @@ func (WendingOAuthCode) TableName() string { return "wending_oauth_codes" }
 
 // migrateWendingOAuth is the single migration hook called from migrateDB.
 func migrateWendingOAuth() error {
-	return DB.AutoMigrate(&WendingOAuthClient{}, &WendingOAuthGrant{}, &WendingOAuthCode{})
+	return DB.AutoMigrate(&WendingOAuthClient{}, &WendingOAuthGrant{}, &WendingOAuthCode{}, &WendingOAuthAccessToken{})
 }
 
 // ---------------------------------------------------------------------------
@@ -266,7 +269,7 @@ func (client *WendingOAuthClient) Save() error {
 	return DB.Model(client).Select("name", "description", "icon_url", "homepage_url", "launch_url",
 		"show_in_sidebar", "sidebar_order", "redirect_uris",
 		"is_public", "enabled", "default_unlimited_quota", "default_remain_quota", "allow_unlimited_quota",
-		"allowed_group", "model_limits_enabled", "model_limits", "client_secret_hash", "updated_at").
+		"allowed_group", "model_limits_enabled", "model_limits", "trusted", "client_secret_hash", "updated_at").
 		Updates(client).Error
 }
 
@@ -282,6 +285,9 @@ func DeleteWendingOAuthClient(client *WendingOAuthClient) error {
 		}
 	}
 	if err := DB.Where("client_id = ?", client.ClientId).Delete(&WendingOAuthCode{}).Error; err != nil {
+		return err
+	}
+	if err := DB.Where("client_id = ?", client.ClientId).Delete(&WendingOAuthAccessToken{}).Error; err != nil {
 		return err
 	}
 	return DB.Delete(client).Error
@@ -402,6 +408,10 @@ func RevokeWendingOAuthGrant(grant *WendingOAuthGrant) error {
 	}
 	if err := DB.Model(&WendingOAuthCode{}).Where("grant_id = ? AND used_at = 0", grant.Id).
 		Update("used_at", common.GetTimestamp()).Error; err != nil {
+		return err
+	}
+	// Sign-in access tokens die with the grant.
+	if err := DB.Where("grant_id = ?", grant.Id).Delete(&WendingOAuthAccessToken{}).Error; err != nil {
 		return err
 	}
 	if grant.TokenId <= 0 {
@@ -541,7 +551,14 @@ func wendingOAuthTokenName(appName string) string {
 // ---------------------------------------------------------------------------
 
 // CreateWendingOAuthCode stores a new one-time code and returns its plaintext.
+// The code carries the grant's scope.
 func CreateWendingOAuthCode(grant *WendingOAuthGrant, redirectURI, codeChallenge string) (string, error) {
+	return CreateWendingOAuthCodeWithScope(grant, redirectURI, codeChallenge, grant.Scope)
+}
+
+// CreateWendingOAuthCodeWithScope stores a one-time code for an explicit scope
+// (e.g. a "login" request against a grant that also holds "api").
+func CreateWendingOAuthCodeWithScope(grant *WendingOAuthGrant, redirectURI, codeChallenge, scope string) (string, error) {
 	code, err := WendingOAuthRandomToken(WendingOAuthCodePrefix)
 	if err != nil {
 		return "", err
@@ -554,7 +571,7 @@ func CreateWendingOAuthCode(grant *WendingOAuthGrant, redirectURI, codeChallenge
 		GrantId:       grant.Id,
 		RedirectUri:   redirectURI,
 		CodeChallenge: codeChallenge,
-		Scope:         grant.Scope,
+		Scope:         scope,
 		ExpiresAt:     now + WendingOAuthCodeTTLSeconds,
 		CreatedAt:     now,
 	}

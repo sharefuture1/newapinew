@@ -43,7 +43,7 @@ func setupWendingOAuthTest(t *testing.T, isPublic bool) *wendingOAuthTestEnv {
 		}
 	})
 	require.NoError(t, db.AutoMigrate(&model.User{}, &model.Token{}, &model.AuditLog{},
-		&model.WendingOAuthClient{}, &model.WendingOAuthGrant{}, &model.WendingOAuthCode{}))
+		&model.WendingOAuthClient{}, &model.WendingOAuthGrant{}, &model.WendingOAuthCode{}, &model.WendingOAuthAccessToken{}))
 
 	user := &model.User{Username: "alice", Password: "x", DisplayName: "Alice", Role: common.RoleCommonUser,
 		Status: common.UserStatusEnabled, Group: "default", Quota: 1000000, AffCode: "aff-alice", AuthVersion: 1}

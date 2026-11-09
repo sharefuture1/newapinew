@@ -12,9 +12,11 @@ See [docs/WENDING_OAUTH.md](docs/WENDING_OAUTH.md).
 
 | Path | Purpose |
 | --- | --- |
-| `model/wending_oauth.go` | Tables `wending_oauth_clients`, `wending_oauth_grants`, `wending_oauth_codes`; secret hashing, PKCE, grant/code lifecycle; sidebar launch fields (`show_in_sidebar`, `launch_url`, `sidebar_order`) |
+| `model/wending_oauth.go` | Tables `wending_oauth_clients`, `wending_oauth_grants`, `wending_oauth_codes`; secret hashing, PKCE, grant/code lifecycle; sidebar launch fields (`show_in_sidebar`, `launch_url`, `sidebar_order`); `trusted` flag |
 | `controller/wending_oauth.go` | Consent API, token endpoint, userinfo, user grant management, root client CRUD, admin grant view, `GET /sidebar-apps` |
 | `controller/wending_oauth_test.go` | Token-endpoint tests (PKCE, redirect mismatch, code reuse, revoked grant, client auth, rotation, expiry) |
+| `model/wending_oauth_login.go` | `login`/`email` scopes, table `wending_oauth_access_tokens` (short-lived `wdat_` sign-in tokens, SHA-256 only), login grant without API key |
+| `controller/wending_oauth_login_test.go` | Sign-in scope tests (exchange → `wdat_`, userinfo, scope rules, trusted skip-consent, revoke) |
 | `router/wending-oauth-router.go` | `SetWendingOAuthRouter` – every route of the feature |
 | `web/src/features/wending/**` | Consent page, "已授权应用" page, root "接入应用" page, API client, runtime i18n bundle (`wending.*` keys), sidebar items |
 | `web/src/routes/oauth/authorize.tsx` | SPA route `/oauth/authorize` (requires login, returns after sign-in) |

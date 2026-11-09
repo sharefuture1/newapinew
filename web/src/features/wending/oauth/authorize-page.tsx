@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
@@ -103,7 +103,133 @@ export function WendingAuthorizePage({
       </Shell>
     )
   }
+  if (res.data.login_only) {
+    return <LoginConsentCard params={params} info={res.data} />
+  }
   return <ConsentCard params={params} info={res.data} />
+}
+
+/**
+ * Sign-in only request ("login" scope): no API key, no quota or group choice.
+ * Trusted first-party clients (skip_consent) are approved automatically; the
+ * server still requires the interactive session and validates everything.
+ */
+function LoginConsentCard({
+  params,
+  info,
+}: {
+  params: WendingAuthorizeParams
+  info: WendingAuthorizeInfo
+}) {
+  const { t } = useTranslation()
+  const user = useAuthStore((s) => s.auth.user)
+  const client = info.client
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+  const autoStarted = useRef(false)
+
+  async function decide(approve: boolean) {
+    setError('')
+    setSubmitting(true)
+    try {
+      const res = await submitAuthorize({
+        ...params,
+        approve,
+        unlimited_quota: false,
+        remain_quota: 0,
+        group: '',
+      })
+      const target = res.data?.redirect_to ?? res.redirect_to
+      if (target) {
+        window.location.assign(target)
+        return
+      }
+      setError(res.message || t('wending.oauth.invalidRequest'))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+    setSubmitting(false)
+  }
+
+  useEffect(() => {
+    if (info.skip_consent && !autoStarted.current) {
+      autoStarted.current = true
+      void decide(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [info.skip_consent])
+
+  const userName = user?.display_name || user?.username || ''
+  const wantsEmail = info.scope.split(' ').includes('email')
+  if (info.skip_consent && !error) {
+    return (
+      <Shell>
+        <p className='text-muted-foreground text-center text-sm'>
+          {t('wending.oauth.signingIn')}
+        </p>
+      </Shell>
+    )
+  }
+  return (
+    <Shell>
+      <Card>
+        <CardHeader className='items-center text-center'>
+          {client.icon_url ? (
+            <img
+              src={client.icon_url}
+              alt=''
+              className='mx-auto mb-2 size-14 rounded-xl object-cover'
+              referrerPolicy='no-referrer'
+            />
+          ) : (
+            <div className='bg-primary text-primary-foreground mx-auto mb-2 flex size-14 items-center justify-center rounded-xl text-2xl font-semibold'>
+              {client.name.slice(0, 1)}
+            </div>
+          )}
+          <CardTitle>
+            {t('wending.oauth.loginTitle', { app: client.name })}
+          </CardTitle>
+          <CardDescription>
+            {t('wending.oauth.loginDesc', { app: client.name })}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-4 text-sm'>
+          {userName ? (
+            <p className='text-muted-foreground'>
+              {t('wending.oauth.signedInAs', { name: userName })}
+            </p>
+          ) : null}
+          <div>
+            <p className='mb-1 font-medium'>{t('wending.oauth.permissions')}</p>
+            <ul className='text-muted-foreground list-disc space-y-1 pl-5'>
+              <li>{t('wending.oauth.permLoginIdentity')}</li>
+              {wantsEmail ? <li>{t('wending.oauth.permLoginEmail')}</li> : null}
+            </ul>
+          </div>
+          {error ? <p className='text-destructive text-sm'>{error}</p> : null}
+          <p className='text-muted-foreground text-xs break-all'>
+            {t('wending.oauth.redirectTo', {
+              host: redirectHost(params.redirect_uri),
+            })}
+          </p>
+        </CardContent>
+        <CardFooter className='flex justify-end gap-2'>
+          <Button
+            variant='outline'
+            disabled={submitting}
+            onClick={() => decide(false)}
+          >
+            {t('wending.oauth.deny')}
+          </Button>
+          <Button disabled={submitting} onClick={() => decide(true)}>
+            {submitting
+              ? t('wending.oauth.redirecting')
+              : t('wending.oauth.loginAllow')}
+          </Button>
+        </CardFooter>
+      </Card>
+    </Shell>
+  )
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
