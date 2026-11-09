@@ -81,7 +81,9 @@ export function GrantList({
                 ) : null}
                 {!grant.token_exists && !grant.revoked_at ? (
                   <Badge variant='secondary'>
-                    {t('wending.grants.keyMissing')}
+                    {grant.token_id > 0
+                      ? t('wending.grants.keyMissing')
+                      : t('wending.grants.signInOnly')}
                   </Badge>
                 ) : null}
               </div>

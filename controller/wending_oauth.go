@@ -83,11 +83,20 @@ func validateWendingAuthorizeRequest(params wendingOAuthAuthorizeParams) (*model
 		scope = model.WendingOAuthDefaultScope
 	}
 	for item := range strings.FieldsSeq(scope) {
-		if item != model.WendingOAuthDefaultScope && item != "profile" {
+		switch item {
+		case model.WendingOAuthScopeAPI, model.WendingOAuthScopeProfile, model.WendingOAuthScopeLogin, model.WendingOAuthScopeEmail:
+		default:
 			return client, "", &wendingOAuthRequestError{Code: "invalid_scope", Description: "Unsupported scope: " + item, RedirectTrusted: true}
 		}
 	}
-	return client, scope, nil
+	hasLogin := model.WendingOAuthScopeHas(scope, model.WendingOAuthScopeLogin)
+	if hasLogin && model.WendingOAuthScopeHas(scope, model.WendingOAuthScopeAPI) {
+		return client, "", &wendingOAuthRequestError{Code: "invalid_scope", Description: "login cannot be combined with api in one request", RedirectTrusted: true}
+	}
+	if model.WendingOAuthScopeHas(scope, model.WendingOAuthScopeEmail) && !hasLogin {
+		return client, "", &wendingOAuthRequestError{Code: "invalid_scope", Description: "email requires the login scope", RedirectTrusted: true}
+	}
+	return client, model.WendingOAuthMergeScopes(scope, ""), nil
 }
 
 // isWendingPKCEChallenge accepts base64url(SHA-256) challenges: exactly 43 chars.
@@ -127,6 +136,7 @@ func wendingOAuthClientPublicView(client *model.WendingOAuthClient) gin.H {
 		"allowed_group":           client.AllowedGroup,
 		"model_limits_enabled":    client.ModelLimitsEnabled,
 		"model_limits":            client.ModelLimits,
+		"trusted":                 client.Trusted,
 	}
 }
 
@@ -184,9 +194,12 @@ func GetWendingOAuthAuthorize(c *gin.Context) {
 	if grant, err := model.GetActiveWendingOAuthGrant(userId, client.ClientId); err == nil && grant != nil {
 		existing = gin.H{"id": grant.Id, "created_at": grant.CreatedAt, "scope": grant.Scope}
 	}
+	loginOnly := model.WendingOAuthIsLoginScope(scope)
 	common.ApiSuccess(c, gin.H{
 		"client":         wendingOAuthClientPublicView(client),
 		"scope":          scope,
+		"login_only":     loginOnly,
+		"skip_consent":   loginOnly && client.Trusted,
 		"user_group":     userGroup,
 		"groups":         groups,
 		"existing_grant": existing,
@@ -226,6 +239,10 @@ func PostWendingOAuthAuthorize(c *gin.Context) {
 		common.ApiSuccess(c, gin.H{"redirect_to": wendingOAuthRedirect(req.RedirectUri, url.Values{
 			"error": {"access_denied"}, "error_description": {"The user denied the request"}, "state": {req.State},
 		})})
+		return
+	}
+	if model.WendingOAuthIsLoginScope(scope) {
+		issueWendingOAuthLogin(c, userId, client, scope, req, auditParams)
 		return
 	}
 
@@ -277,6 +294,28 @@ func PostWendingOAuthAuthorize(c *gin.Context) {
 	common.ApiSuccess(c, gin.H{
 		"redirect_to": wendingOAuthRedirect(req.RedirectUri, url.Values{"code": {code}, "state": {req.State}}),
 		"rotated":     rotated,
+	})
+}
+
+// issueWendingOAuthLogin completes a sign-in-only ("login" scope) approval:
+// it records the grant without creating an API key and returns the code.
+func issueWendingOAuthLogin(c *gin.Context, userId int, client *model.WendingOAuthClient, scope string, req wendingOAuthApproveRequest, auditParams model.AuditFields) {
+	grant, existing, err := model.IssueWendingOAuthLoginGrant(userId, client, scope)
+	if err != nil {
+		recordWendingOAuthAudit(c, userId, "wending_oauth.login_authorize", false, "Sign-in authorization failed for "+client.Name, auditParams)
+		common.ApiError(c, err)
+		return
+	}
+	code, err := model.CreateWendingOAuthCodeWithScope(grant, req.RedirectUri, req.CodeChallenge, scope)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	auditParams["grant_id"], auditParams["scope"], auditParams["trusted"], auditParams["existing"] = grant.Id, scope, client.Trusted, existing
+	recordWendingOAuthAudit(c, userId, "wending_oauth.login_authorize", true, "Signed in to "+client.Name, auditParams)
+	common.ApiSuccess(c, gin.H{
+		"redirect_to": wendingOAuthRedirect(req.RedirectUri, url.Values{"code": {code}, "state": {req.State}}),
+		"rotated":     false,
 	})
 }
 
@@ -389,6 +428,30 @@ func PostWendingOAuthToken(c *gin.Context) {
 		failGrant("Authorization grant has been revoked")
 		return
 	}
+	if model.WendingOAuthIsLoginScope(row.Scope) {
+		user, err := model.GetUserCache(grant.UserId)
+		if err != nil || user.Status != common.UserStatusEnabled {
+			failGrant("The authorizing user is unavailable")
+			return
+		}
+		accessToken, expiresIn, err := model.CreateWendingOAuthAccessToken(grant, row.Scope)
+		if err != nil {
+			wendingOAuthTokenError(c, http.StatusInternalServerError, "server_error", "Failed to issue access token")
+			return
+		}
+		model.TouchWendingOAuthGrant(grant.Id)
+		recordWendingOAuthAudit(c, grant.UserId, "wending_oauth.token_exchange", true, "Issued sign-in token to "+client.Name, auditParams)
+		c.Header("Cache-Control", "no-store")
+		c.Header("Pragma", "no-cache")
+		c.JSON(http.StatusOK, gin.H{
+			"access_token": accessToken,
+			"token_type":   "Bearer",
+			"expires_in":   expiresIn,
+			"scope":        row.Scope,
+			"user_id":      grant.UserId,
+		})
+		return
+	}
 	token, err := model.GetTokenByIds(grant.TokenId, grant.UserId)
 	if err != nil || token.Status != common.TokenStatusEnabled {
 		failGrant("The API key for this authorization is no longer available")
@@ -430,6 +493,10 @@ func GetWendingOAuthUserInfo(c *gin.Context) {
 		unauthorized()
 		return
 	}
+	if strings.HasPrefix(raw, model.WendingOAuthAccessTokenPrefix) {
+		getWendingOAuthLoginUserInfo(c, raw, unauthorized)
+		return
+	}
 	token, err := model.GetWendingOAuthTokenByKey(key)
 	if err != nil || token.Status != common.TokenStatusEnabled {
 		unauthorized()
@@ -466,6 +533,35 @@ func GetWendingOAuthUserInfo(c *gin.Context) {
 			"group":           token.Group,
 		},
 	})
+}
+
+// getWendingOAuthLoginUserInfo answers userinfo for a sign-in (wdat_) token.
+// It returns identity only: no balance and no API key data.
+func getWendingOAuthLoginUserInfo(c *gin.Context, raw string, unauthorized func()) {
+	row, grant, err := model.ValidateWendingOAuthAccessToken(raw)
+	if err != nil {
+		unauthorized()
+		return
+	}
+	user, err := model.GetUserById(row.UserId, false)
+	if err != nil || user.Status != common.UserStatusEnabled {
+		unauthorized()
+		return
+	}
+	body := gin.H{
+		"sub":          strconv.Itoa(user.Id),
+		"user_id":      user.Id,
+		"username":     user.Username,
+		"display_name": user.DisplayName,
+		"client_id":    grant.ClientId,
+		"scope":        row.Scope,
+	}
+	// new-api does not track whether an e-mail was verified, so relying
+	// parties must NOT use it to merge accounts (email_verified=false).
+	body["email"] = user.Email
+	body["email_verified"] = false
+	c.Header("Cache-Control", "no-store")
+	c.JSON(http.StatusOK, body)
 }
 
 // ---------------------------------------------------------------------------
@@ -521,6 +617,7 @@ type wendingOAuthClientRequest struct {
 	AllowedGroup          string   `json:"allowed_group"`
 	ModelLimitsEnabled    bool     `json:"model_limits_enabled"`
 	ModelLimits           string   `json:"model_limits"`
+	Trusted               bool     `json:"trusted"`
 }
 
 type wendingOAuthClientView struct {
@@ -575,6 +672,7 @@ func applyWendingOAuthClientRequest(client *model.WendingOAuthClient, req wendin
 	client.AllowedGroup = strings.TrimSpace(req.AllowedGroup)
 	client.ModelLimitsEnabled = req.ModelLimitsEnabled
 	client.ModelLimits = strings.TrimSpace(req.ModelLimits)
+	client.Trusted = req.Trusted
 	return nil
 }
 

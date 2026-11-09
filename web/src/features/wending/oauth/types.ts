@@ -28,11 +28,16 @@ export interface WendingOAuthClientPublic {
   allowed_group: string
   model_limits_enabled: boolean
   model_limits: string
+  trusted?: boolean
 }
 
 export interface WendingAuthorizeInfo {
   client: WendingOAuthClientPublic
   scope: string
+  /** "login" scope: sign-in only, no API key is created. */
+  login_only?: boolean
+  /** Trusted first-party client + login scope: approve without a consent screen. */
+  skip_consent?: boolean
   user_group: string
   groups: { name: string; desc: string }[]
   existing_grant: { id: number; created_at: number; scope: string } | null
@@ -110,6 +115,7 @@ export interface WendingOAuthClient {
   allowed_group: string
   model_limits_enabled: boolean
   model_limits: string
+  trusted: boolean
   has_secret: boolean
   created_at: number
   updated_at: number

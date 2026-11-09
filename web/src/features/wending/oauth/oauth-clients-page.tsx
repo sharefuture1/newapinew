@@ -85,6 +85,7 @@ const EMPTY_INPUT: WendingOAuthClientInput = {
   allowed_group: '',
   model_limits_enabled: false,
   model_limits: '',
+  trusted: false,
 }
 
 type Editing = { id: number | null; input: WendingOAuthClientInput }
@@ -129,7 +130,8 @@ function ClientForm({
       | 'show_in_sidebar'
       | 'allow_unlimited_quota'
       | 'default_unlimited_quota'
-      | 'model_limits_enabled',
+      | 'model_limits_enabled'
+      | 'trusted',
     label: string
   ) => (
     <label className='flex items-center justify-between gap-2 text-sm'>
@@ -173,6 +175,7 @@ function ClientForm({
       </div>
       {toggle('enabled', t('wending.clients.enabled'))}
       {toggle('is_public', t('wending.clients.isPublic'))}
+      {toggle('trusted', t('wending.clients.trusted'))}
       <div className='space-y-1'>
         <Label htmlFor='wending-default-quota'>
           {t('wending.clients.defaultQuota')}
@@ -336,6 +339,11 @@ export function WendingOAuthClientsPage() {
                       {t('wending.clients.disabled')}
                     </Badge>
                   ) : null}
+                  {client.trusted ? (
+                    <Badge variant='secondary'>
+                      {t('wending.clients.trustedBadge')}
+                    </Badge>
+                  ) : null}
                   {client.show_in_sidebar ? (
                     <Badge variant='secondary'>
                       {t('wending.clients.showInSidebar')}
@@ -389,6 +397,7 @@ export function WendingOAuthClientsPage() {
                           allowed_group: client.allowed_group,
                           model_limits_enabled: client.model_limits_enabled,
                           model_limits: client.model_limits,
+                          trusted: client.trusted,
                         },
                       })
                     }
