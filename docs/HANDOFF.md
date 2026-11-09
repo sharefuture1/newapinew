@@ -39,7 +39,7 @@ _Last updated: 2026-11-10 (UTC+7) – added the sign-in (`login`) scope for the 
 | E2E on built binary, SQLite fresh DB | pass – `docs/wending-oauth-e2e.sh` (incl. sidebar-apps step 3b) |
 | Production deploy (sidebar launch) | see record below |
 
-## Sign-in scope for the shop (branch `wending-shop-login`) – PENDING DEPLOY
+## Sign-in scope for the shop (branch `wending-shop-login`) – LIVE 2026-11-10 05:58 UTC+7 (see record below)
 
 Status 2026-11-10 (UTC+7): code + tests done, PR open against `wending`. **Not deployed; nothing
 written to the production DB.** Deploying new-api is owned by the bot that runs vultr-sv.
@@ -145,4 +145,28 @@ install -m 0755 /opt/new-api/new-api.bak-20261105-132552 /opt/new-api/new-api &&
 # additive columns can stay; restore dump only if needed:
 #  pg_restore --clean -d "$SQL_DSN" /opt/new-api/db-backup-20261105-132552-pre-sidebar.dump
 ```
+
+## Production deployment record — 2026-11-09 22:58 UTC (shop sign-in scope)
+
+- PR #1 (`wending-shop-login`) + review fix `e9ed899` (userinfo returns e-mail **only** with the `email` scope)
+  merged into `wending` as `44e03dc`. Review: no other blocking issues (see PR #1 review notes in the bot report).
+- Binary `v1.0.0-rc.45-wending-44e03dc`, sha256 `eb0c139513e0b58f1eb9880dd919c51e84c4bc752bce04acc16ec722814de6e9`
+  (CGO_ENABLED=0, `-s -w`). Restart → healthy `/api/status`: ~5.5 s.
+- Previous binary (2c8eae5): `/opt/new-api/new-api.bak-20261109-225755`
+- DB backup: `/opt/new-api/db-backup-20261109-225755-pre-login-scope.dump` (600)
+- AutoMigrate: table `wending_oauth_access_tokens`, column `wending_oauth_clients.trusted` (nullable, NULL = false,
+  same as the other bool columns). Journal: no errors.
+- Verified: version; `/oauth/authorize` 200; bogus token request → 401 invalid_client; userinfo `Bearer wdat_bogus`
+  and `sk-bogus` → 401; huabu + lrs `/api/auth/wending/start` → 302 → authorize 200; lrs real secret + fake code →
+  400 invalid_grant (api-scope exchange path intact).
+- **Shop client** registered (id 5): `wd_61eVWNqaUiGtRC8eT3Ss0Gsr`, name `WendingAI 商城`, homepage
+  `https://shop.wending.ai`, confidential, enabled, **trusted**, redirect exactly
+  `https://shop.wending.ai/auth/wendingai/callback`, sidebar off (launch_url `https://shop.wending.ai/auth/login`).
+  Secret: `/opt/new-api/oauth-clients/shop.secret` (root 600; client_id/client_secret lines). Verified real
+  secret + fake code → 400 invalid_grant, wrong secret → 401.
+  Table backup / rollback: `/opt/new-api/wending_oauth_clients-20261109-225911.pre-shop.{backup.csv,rollback.sql}`.
+- Note: an older admin-created sidebar entry id 2 `wendingai shop` (`wd_EL6HVNRwXn7oiEmnLAdoAQcl`, redirect
+  `https://shop.wending.ai/`) still exists and is unrelated to sign-in; keep or delete it as the owner prefers.
+- Rollback: `install -m 0755 /opt/new-api/new-api.bak-20261109-225755 /opt/new-api/new-api && systemctl restart new-api`
+  (extra table/column ignored by the old binary); remove the shop client with the rollback SQL above.
 
