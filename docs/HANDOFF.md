@@ -1,6 +1,6 @@
 # HANDOFF – 问鼎AI账号一键授权 (Wending OAuth)
 
-_Last updated: 2026-11-05 08:30 EST (America/New_York)_
+_Last updated: 2026-11-10 (UTC+7) – added the sign-in (`login`) scope for the shop, **not deployed**_
 
 ## What was done
 
@@ -39,9 +39,44 @@ _Last updated: 2026-11-05 08:30 EST (America/New_York)_
 | E2E on built binary, SQLite fresh DB | pass – `docs/wending-oauth-e2e.sh` (incl. sidebar-apps step 3b) |
 | Production deploy (sidebar launch) | see record below |
 
+## Sign-in scope for the shop (branch `wending-shop-login`) – PENDING DEPLOY
+
+Status 2026-11-10 (UTC+7): code + tests done, PR open against `wending`. **Not deployed; nothing
+written to the production DB.** Deploying new-api is owned by the bot that runs vultr-sv.
+
+What it adds (details: [WENDING_OAUTH.md § Sign-in scope](WENDING_OAUTH.md)):
+- scopes `login` / `email`; login issues a 10-minute `wdat_` token, never an `sk-` key
+- userinfo returns id, username, display name, e-mail (`email_verified: false`)
+- `trusted` client flag → login-only requests skip the consent screen
+- DB (AutoMigrate, additive only): new table `wending_oauth_access_tokens`, new column
+  `wending_oauth_clients.trusted` (default false). Existing clients (huabu, lrs) behave exactly as before.
+
+Checks run: `go test ./controller ./model` pass; `bun run typecheck` pass; `bun run test`
+199 files / 2368 tests pass; `bun run build` pass. (`bun run lint` fails only on pre-existing
+`scripts/sync-i18n.mjs` issues; `src/features/wending` is clean.)
+
+Deploy steps (vultr-sv, same procedure as the records below):
+1. Merge the PR into `wending`; on the build box: `cd web && bun install --frozen-lockfile && bun run build`,
+   then `go build -ldflags "-s -w -X github.com/QuantumNous/new-api/common.Version=v1.0.0-rc.45-wending-<sha>" -o new-api-wending-rc45-<sha>`;
+   record sha256.
+2. On vultr-sv: back up the binary (`cp -a /opt/new-api/new-api /opt/new-api/new-api.bak-$TS`) and the DB
+   (`pg_dump "$SQL_DSN" -Fc -f /opt/new-api/db-backup-$TS-pre-login-scope.dump`).
+3. `install -m 0755` the new binary, `systemctl restart new-api`, check `journalctl -u new-api` for migration errors.
+4. Verify: `/api/status` version; `/oauth/authorize` 200; `POST /api/oauth/token` bogus → 401 `invalid_client`;
+   `GET /api/oauth/userinfo` with `Bearer wdat_bogus` → 401; huabu and lrs one-click auth still work.
+5. Register the shop client on 接入应用 (root):
+   - name `WendingAI 商城`, homepage `https://shop.wending.ai`, confidential (**not** public), enabled
+   - redirect URI (exact): `https://shop.wending.ai/auth/wendingai/callback`
+   - **trusted = on**; show_in_sidebar optional (launch_url `https://shop.wending.ai/auth/login`)
+   - quota / group / model-limit fields are irrelevant for the login scope
+   - copy the client secret once into the shop admin (设置 → WendingAI 登录); keep a root-only copy at
+     `/opt/new-api/oauth-clients/shop.secret` (600). Never paste it into chat or docs.
+6. Rollback: reinstall the `.bak` binary and restart. The extra table/column are ignored by the old binary;
+   outstanding `wdat_` tokens simply stop working (shop sessions already issued are unaffected).
+
 ## Key paths
 
-- Backend: `model/wending_oauth.go`, `controller/wending_oauth.go`, `controller/wending_oauth_test.go`, `router/wending-oauth-router.go`
+- Backend: `model/wending_oauth.go`, `model/wending_oauth_login.go`, `controller/wending_oauth.go`, `controller/wending_oauth_test.go`, `controller/wending_oauth_login_test.go`, `router/wending-oauth-router.go`
 - Frontend: `web/src/features/wending/**`, `web/src/routes/oauth/authorize.tsx`, `web/src/routes/_authenticated/wending/*`
 - Docs: `docs/WENDING_OAUTH.md`, `WENDING_PATCHES.md`
 - E2E script: `docs/wending-oauth-e2e.sh` (`BASE=http://localhost:PORT ./docs/wending-oauth-e2e.sh`)
