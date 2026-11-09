@@ -62,6 +62,10 @@ _Last updated: 2026-11-05 08:30 EST (America/New_York)_
    launch_url `https://lrs.wending.ai/?wending_auth=1`, sidebar_order 20. Secret: `/opt/new-api/oauth-clients/lrs.secret` (600).
    Backup/rollback SQL: `/opt/new-api/wending_oauth_clients-20261109-211831.pre-lrs.{backup,rollback}.sql`.
    Details: that repo's `docs/HANDOFF_WENDING_OAUTH.md`.
+   2026-11-10 update: client id 4 renamed `ai狼人杀` → `WendingAI 狼人杀` (backup/rollback
+   `/opt/new-api/wending_oauth_clients-id4-20261109-213319.pre-rename.{backup.csv,rollback.sql}`, 600). lrs now
+   remembers the issued key per device, so `?wending_auth=1` no longer re-authorizes (and rotates the key) when a key is
+   saved. Optimization details: that repo's `docs/HANDOFF_OPTIMIZATION.md`.
 2. Set 系统设置 → **服务器地址** to `https://api.wending.ai` if not already (token `base_url`).
 3. MCP server: register as a **public** client with a loopback or reverse-domain redirect URI.
 4. When upgrading production to rc.48+: rebase `wending` (see WENDING_PATCHES.md), rebuild web.
