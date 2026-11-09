@@ -556,10 +556,13 @@ func getWendingOAuthLoginUserInfo(c *gin.Context, raw string, unauthorized func(
 		"client_id":    grant.ClientId,
 		"scope":        row.Scope,
 	}
-	// new-api does not track whether an e-mail was verified, so relying
-	// parties must NOT use it to merge accounts (email_verified=false).
-	body["email"] = user.Email
-	body["email_verified"] = false
+	// E-mail is released only when the "email" scope was granted. new-api does
+	// not track whether an e-mail was verified, so relying parties must NOT use
+	// it to merge accounts (email_verified=false).
+	if model.WendingOAuthScopeHas(row.Scope, model.WendingOAuthScopeEmail) {
+		body["email"] = user.Email
+		body["email_verified"] = false
+	}
 	c.Header("Cache-Control", "no-store")
 	c.JSON(http.StatusOK, body)
 }

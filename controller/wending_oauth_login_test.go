@@ -103,8 +103,10 @@ func TestWendingLoginTokenExpiresAndDiesWithGrant(t *testing.T) {
 	code, _ = env.approveScope(challenge, wendingShopRedirect, "login")
 	_, resp = env.exchange(env.tokenForm(code, verifier, wendingShopRedirect))
 	access = resp["access_token"].(string)
-	rec, _ = env.userinfo(access)
+	rec, info := env.userinfo(access)
 	require.Equal(t, http.StatusOK, rec.Code)
+	_, hasEmail := info["email"]
+	require.False(t, hasEmail, "email must only be released with the email scope")
 	grant, err := model.GetActiveWendingOAuthGrant(env.userId, env.client.ClientId)
 	require.NoError(t, err)
 	require.Equal(t, 0, grant.TokenId)
