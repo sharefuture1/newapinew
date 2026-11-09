@@ -48,16 +48,12 @@ _Last updated: 2026-11-05 08:30 EST (America/New_York)_
 
 ## Open items
 
-1. **Huabu RP integration** – `https://huabu.wending.ai` is a Vite SPA ("WendingAI 创作台")
-   that currently uses **manual API key paste** (`wending-connection` / `wending-key`).
-   Paths like `/api/auth/wending/start` and `/api/auth/wending/callback` return the SPA
-   `index.html` (Vercel rewrite), not real OAuth handlers. Huabu still needs:
-   - Server route `GET /api/auth/wending/start` → create state + PKCE verifier, set httpOnly
-     cookie, 302 to `https://api.wending.ai/oauth/authorize?...`
-   - Server route `GET /api/auth/wending/callback` → verify state, `POST /api/oauth/token`,
-     store `access_token` encrypted, redirect into the app
-   - Env: `WENDING_CLIENT_ID`, `WENDING_CLIENT_SECRET`, `WENDING_AUTHORIZE_URL`, etc.
-   - Until that ships, sidebar → `https://huabu.wending.ai/` only opens the app homepage.
+1. **Huabu RP integration – LIVE (2026-11-10 04:05 UTC+7).** Repo `sharefuture1/infinite-canvas-private`,
+   branch `codex/wending-brand-and-help` (merged from `wending-oauth`), Vercel project `web`,
+   production `dpl_5YBYoUYT7DScWi9tHp2xQs8185F5` (rollback: `dpl_543g8Yg9LuZnfC92fng9bX7KBEgs`).
+   `/api/auth/wending/{start,callback,session}` are Vercel functions; env `WENDING_OAUTH_CLIENT_ID`,
+   `WENDING_OAUTH_CLIENT_SECRET` (sensitive), `WENDING_OAUTH_BASE_URL`, `WENDING_OAUTH_REDIRECT_URI`.
+   Details: that repo's `docs/HANDOFF.md`. Real-user end-to-end login still to be confirmed.
 2. Set 系统设置 → **服务器地址** to `https://api.wending.ai` if not already (token `base_url`).
 3. MCP server: register as a **public** client with a loopback or reverse-domain redirect URI.
 4. When upgrading production to rc.48+: rebase `wending` (see WENDING_PATCHES.md), rebuild web.
@@ -88,7 +84,9 @@ _Last updated: 2026-11-05 08:30 EST (America/New_York)_
   - client_id: `wd_IHtyFqxBDKBrOJIkoS5Gh8FQ`
   - name: `WendingAI 创作台`
   - redirect: `https://huabu.wending.ai/api/auth/wending/callback`
-  - launch_url: `https://huabu.wending.ai/`
+  - launch_url: `https://huabu.wending.ai/?wending_auth=1` (changed 2026-11-09 21:04 UTC; was `https://huabu.wending.ai/`;
+    backup/rollback SQL: `/opt/new-api/wending_oauth_clients-huabu-20261109-210422.{backup,rollback}.sql`; no restart needed,
+    sidebar-apps reads the DB on every request)
   - show_in_sidebar: true, sidebar_order: 10
   - secret file (root only, chmod 600): `/opt/new-api/oauth-clients/huabu.secret`
   - Sidebar list for a logged-in user was not live-checked (no prod user credentials used);
