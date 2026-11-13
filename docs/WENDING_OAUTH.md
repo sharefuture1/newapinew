@@ -267,3 +267,32 @@ sudo systemctl restart new-api
 # issued OAuth keys keep working as normal keys – delete them on the keys page if needed.
 # Restore the DB dump only if something else went wrong: pg_restore --clean -d "$SQL_DSN" /root/newapi-$TS.dump
 ```
+
+## Native desktop clients (WendingAI Switch)
+
+Branch `wending-desktop-auth`. Lets a desktop app do one-click sign-in without a secret.
+
+- **Public client + loopback redirect (RFC 8252).** For a public client whose registered
+  redirect URI is `http://127.0.0.1/<path>` or `http://localhost/<path>`, any port matches
+  (`MatchRedirectURI`). Scheme, host, path and query must still match exactly. Confidential
+  clients and non-loopback URIs keep exact string matching. PKCE S256 is required.
+- **Per-device grants.** `/oauth/authorize` accepts optional `device_id` (stable per install,
+  `[A-Za-z0-9._-]{8,64}`) and `device_name` (≤64 chars, shown to the user). Grants and keys are
+  per (user, client, device), so each computer gets its own key and revoking one does not
+  touch the others. The key name is `授权:<App> · <device>`. Without `device_id` the old
+  one-key-per-user behaviour is unchanged.
+- **Public client info.** `GET /api/oauth/clients/:client_id` returns `{client_id, name,
+  icon_url, homepage_url}` for enabled public clients (404 otherwise). The app uses it to
+  decide whether to show the one-click button.
+- **Fixed client id.** Admin "create client" accepts an optional `client_id` so the id baked
+  into the app can be registered as is.
+
+### Deploy steps (not done; do these on production when ready)
+1. Merge `wending-desktop-auth`, build and deploy (the migration adds `device_id`/`device_name`
+   columns through AutoMigrate).
+2. Admin → OAuth 客户端 → 新建: Client ID `wd_wendingai_switch`, name `WendingAI Switch`,
+   type **public**, scope `api`, redirect URI `http://127.0.0.1/wending/callback`, enabled.
+3. Check `curl https://api.wending.ai/api/oauth/clients/wd_wendingai_switch` returns 200;
+   the desktop app then shows "一键登录" on the main line automatically.
+
+Tests: `go test ./controller -run WendingOAuth` (includes `wending_oauth_desktop_test.go`).
