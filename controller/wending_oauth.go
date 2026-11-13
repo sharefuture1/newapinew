@@ -13,8 +13,10 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/middleware"
@@ -35,6 +37,38 @@ type wendingOAuthAuthorizeParams struct {
 	Scope               string `json:"scope" form:"scope"`
 	CodeChallenge       string `json:"code_challenge" form:"code_challenge"`
 	CodeChallengeMethod string `json:"code_challenge_method" form:"code_challenge_method"`
+	// Optional, native clients only: a stable random id per installation and a
+	// display name (e.g. the computer name). See model.WendingOAuthGrant.
+	DeviceId   string `json:"device_id" form:"device_id"`
+	DeviceName string `json:"device_name" form:"device_name"`
+}
+
+var wendingDeviceIdPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{8,64}$`)
+
+// normalizeWendingDevice validates device_id and cleans device_name (control
+// characters removed, at most 32 characters). device_name without device_id
+// is ignored.
+func normalizeWendingDevice(params wendingOAuthAuthorizeParams) (string, string, *wendingOAuthRequestError) {
+	id := strings.TrimSpace(params.DeviceId)
+	if id == "" {
+		return "", "", nil
+	}
+	if !wendingDeviceIdPattern.MatchString(id) {
+		return "", "", &wendingOAuthRequestError{Code: "invalid_request", Description: "device_id is malformed", RedirectTrusted: true}
+	}
+	var b strings.Builder
+	n := 0
+	for _, r := range strings.TrimSpace(params.DeviceName) {
+		if unicode.IsControl(r) || r == '<' || r == '>' {
+			continue
+		}
+		if n >= 32 {
+			break
+		}
+		b.WriteRune(r)
+		n++
+	}
+	return id, strings.TrimSpace(b.String()), nil
 }
 
 type wendingOAuthApproveRequest struct {
@@ -63,7 +97,7 @@ func validateWendingAuthorizeRequest(params wendingOAuthAuthorizeParams) (*model
 	if err != nil || !client.Enabled {
 		return nil, "", &wendingOAuthRequestError{Code: "invalid_client", Description: "Unknown or disabled client"}
 	}
-	if !client.HasRedirectURI(params.RedirectUri) {
+	if !client.MatchRedirectURI(params.RedirectUri) {
 		return client, "", &wendingOAuthRequestError{Code: "invalid_request", Description: "redirect_uri is not registered for this client"}
 	}
 	if params.ResponseType != "code" {
@@ -74,6 +108,9 @@ func validateWendingAuthorizeRequest(params wendingOAuthAuthorizeParams) (*model
 	}
 	if !isWendingPKCEChallenge(params.CodeChallenge) {
 		return client, "", &wendingOAuthRequestError{Code: "invalid_request", Description: "code_challenge is missing or malformed", RedirectTrusted: true}
+	}
+	if _, _, devErr := normalizeWendingDevice(params); devErr != nil {
+		return client, "", devErr
 	}
 	if len(params.State) > 1024 {
 		return client, "", &wendingOAuthRequestError{Code: "invalid_request", Description: "state is too long", RedirectTrusted: true}
@@ -180,9 +217,10 @@ func GetWendingOAuthAuthorize(c *gin.Context) {
 		}
 		groups = append(groups, gin.H{"name": name, "desc": desc})
 	}
+	deviceId, deviceName, _ := normalizeWendingDevice(params)
 	var existing gin.H
-	if grant, err := model.GetActiveWendingOAuthGrant(userId, client.ClientId); err == nil && grant != nil {
-		existing = gin.H{"id": grant.Id, "created_at": grant.CreatedAt, "scope": grant.Scope}
+	if grant, err := model.GetActiveWendingOAuthDeviceGrant(userId, client.ClientId, deviceId); err == nil && grant != nil {
+		existing = gin.H{"id": grant.Id, "created_at": grant.CreatedAt, "scope": grant.Scope, "device_name": grant.DeviceName}
 	}
 	common.ApiSuccess(c, gin.H{
 		"client":         wendingOAuthClientPublicView(client),
@@ -190,6 +228,7 @@ func GetWendingOAuthAuthorize(c *gin.Context) {
 		"user_group":     userGroup,
 		"groups":         groups,
 		"existing_grant": existing,
+		"device_name":    deviceName,
 		"quota_per_unit": common.QuotaPerUnit,
 		"max_quota":      maxTokenQuota(),
 	})
@@ -221,6 +260,9 @@ func PostWendingOAuthAuthorize(c *gin.Context) {
 		return
 	}
 	auditParams := model.AuditFields{"client_id": client.ClientId, "client_name": client.Name}
+	if _, deviceName, _ := normalizeWendingDevice(req.wendingOAuthAuthorizeParams); deviceName != "" {
+		auditParams["device_name"] = deviceName
+	}
 	if !req.Approve {
 		recordWendingOAuthAudit(c, userId, "wending_oauth.deny", true, "Denied authorization for "+client.Name, auditParams)
 		common.ApiSuccess(c, gin.H{"redirect_to": wendingOAuthRedirect(req.RedirectUri, url.Values{
@@ -236,6 +278,7 @@ func PostWendingOAuthAuthorize(c *gin.Context) {
 		ModelLimits:        client.ModelLimits,
 		Scope:              scope,
 	}
+	settings.DeviceId, settings.DeviceName, _ = normalizeWendingDevice(req.wendingOAuthAuthorizeParams)
 	if settings.UnlimitedQuota {
 		if !client.AllowUnlimitedQuota {
 			common.ApiErrorT(c, "This application does not allow unlimited quota")
@@ -505,6 +548,9 @@ func RevokeSelfWendingOAuthGrant(c *gin.Context) {
 // ---------------------------------------------------------------------------
 
 type wendingOAuthClientRequest struct {
+	// ClientId is only read on create: an optional fixed, human-readable id for
+	// first-party native apps that ship it in their binary (e.g. wd_wendingai_switch).
+	ClientId              string   `json:"client_id"`
 	Name                  string   `json:"name"`
 	Description           string   `json:"description"`
 	IconUrl               string   `json:"icon_url"`
@@ -615,6 +661,8 @@ func ListWendingOAuthClients(c *gin.Context) {
 	common.ApiSuccess(c, views)
 }
 
+var wendingCustomClientIdPattern = regexp.MustCompile(`^wd_[a-z0-9_]{3,40}$`)
+
 // POST /api/wending/oauth/clients (root). The secret is returned only once.
 func CreateWendingOAuthClient(c *gin.Context) {
 	var req wendingOAuthClientRequest
@@ -627,12 +675,24 @@ func CreateWendingOAuthClient(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	clientId, err := model.WendingOAuthRandomToken(model.WendingOAuthClientIdPrefix)
-	if err != nil {
-		common.ApiError(c, err)
-		return
+	if custom := strings.TrimSpace(req.ClientId); custom != "" {
+		if !wendingCustomClientIdPattern.MatchString(custom) {
+			common.ApiErrorStatus(c, http.StatusBadRequest, errors.New("client_id must match wd_[a-z0-9_]{3,40}"))
+			return
+		}
+		if existing, err := model.GetWendingOAuthClientByClientId(custom); err == nil && existing != nil {
+			common.ApiErrorStatus(c, http.StatusConflict, errors.New("client_id already exists"))
+			return
+		}
+		client.ClientId = custom
+	} else {
+		clientId, err := model.WendingOAuthRandomToken(model.WendingOAuthClientIdPrefix)
+		if err != nil {
+			common.ApiError(c, err)
+			return
+		}
+		client.ClientId = clientId[:len(model.WendingOAuthClientIdPrefix)+24]
 	}
-	client.ClientId = clientId[:len(model.WendingOAuthClientIdPrefix)+24]
 	secret, err := client.RotateSecret()
 	if err != nil {
 		common.ApiError(c, err)
@@ -728,4 +788,25 @@ func RevokeAdminWendingOAuthGrant(c *gin.Context) {
 		return
 	}
 	common.ApiSuccess(c, nil)
+}
+
+// GetWendingOAuthPublicClient lets native apps check, without signing in,
+// whether their client is registered and enabled before opening the browser
+// (so they can fall back to pasting a key). Only display data is returned.
+// GET /api/oauth/clients/:client_id (public, rate-limited)
+func GetWendingOAuthPublicClient(c *gin.Context) {
+	clientId := strings.TrimSpace(c.Param("client_id"))
+	client, err := model.GetWendingOAuthClientByClientId(clientId)
+	if clientId == "" || err != nil || client == nil || !client.Enabled {
+		c.JSON(http.StatusNotFound, gin.H{"success": false, "message": "Unknown or disabled client"})
+		return
+	}
+	common.ApiSuccess(c, gin.H{
+		"client_id":    client.ClientId,
+		"name":         client.Name,
+		"icon_url":     client.IconUrl,
+		"homepage_url": client.HomepageUrl,
+		"is_public":    client.IsPublic,
+		"loopback":     client.IsPublic, // RFC 8252 port-flexible loopback redirects
+	})
 }

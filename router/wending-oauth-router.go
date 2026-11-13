@@ -17,6 +17,7 @@ func SetWendingOAuthRouter(router *gin.Engine) {
 		publicRoute.POST("/token", middleware.CriticalRateLimit(), middleware.AnonymousRequestBodyLimit(), controller.PostWendingOAuthToken)
 		publicRoute.GET("/userinfo", middleware.CORS(), controller.GetWendingOAuthUserInfo)
 		publicRoute.OPTIONS("/userinfo", middleware.CORS())
+		publicRoute.GET("/clients/:client_id", controller.GetWendingOAuthPublicClient)
 	}
 
 	// Console endpoints (dashboard session auth via Authorization header).
