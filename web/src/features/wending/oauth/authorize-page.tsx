@@ -204,6 +204,11 @@ function ConsentCard({
               {t('wending.oauth.signedInAs', { name: userName })}
             </p>
           ) : null}
+          {info.device_name ? (
+            <p className='text-muted-foreground'>
+              {t('wending.oauth.device', { name: info.device_name })}
+            </p>
+          ) : null}
           <div>
             <p className='mb-1 font-medium'>{t('wending.oauth.permissions')}</p>
             <ul className='text-muted-foreground list-disc space-y-1 pl-5'>
@@ -291,7 +296,9 @@ function ConsentCard({
 
           {info.existing_grant ? (
             <p className='rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs'>
-              {t('wending.oauth.existingGrant')}
+              {params.device_id
+                ? t('wending.oauth.existingDeviceGrant')
+                : t('wending.oauth.existingGrant')}
             </p>
           ) : null}
           {error ? <p className='text-destructive text-sm'>{error}</p> : null}

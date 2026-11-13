@@ -142,6 +142,19 @@ function ClientForm({
   )
   return (
     <div className='grid max-h-[65vh] gap-3 overflow-y-auto pr-1'>
+      {editing.id === null ? (
+        <div className='space-y-1'>
+          <Label htmlFor='wending-client-id'>
+            {t('wending.clients.fixedClientId')}
+          </Label>
+          <Input
+            id='wending-client-id'
+            value={input.client_id ?? ''}
+            placeholder='wd_wendingai_switch'
+            onChange={(e) => set('client_id', e.target.value.trim())}
+          />
+        </div>
+      ) : null}
       {text('name', t('wending.clients.name'))}
       {text('description', t('wending.clients.description'))}
       {text('icon_url', t('wending.clients.iconUrl'))}

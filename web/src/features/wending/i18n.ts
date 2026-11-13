@@ -52,6 +52,9 @@ const en = {
       'This authorization link is invalid or the app is not registered. Please return to the app and try again.',
     redirectTo: 'You will be redirected to {{host}}',
     quotaRequired: 'Please enter a positive spending limit',
+    device: 'Device: {{name}}',
+    existingDeviceGrant:
+      'This device is already authorized. Approving again issues a new key for this device only; your other devices keep working.',
   },
   grants: {
     title: 'Authorized Apps',
@@ -73,6 +76,8 @@ const en = {
     title: 'OAuth Apps',
     desc: 'Register first-party products that can request a user API key via "Wending AI account authorization".',
     create: 'New app',
+    fixedClientId:
+      'Client ID (optional, create only; e.g. wd_wendingai_switch for desktop apps)',
     edit: 'Edit app',
     name: 'Name',
     description: 'Description',
@@ -146,6 +151,9 @@ const zhCN: typeof en = {
     invalidRequestDesc: '授权链接无效或应用未注册，请返回应用重试。',
     redirectTo: '授权后将跳转到 {{host}}',
     quotaRequired: '请输入大于 0 的额度上限',
+    device: '设备：{{name}}',
+    existingDeviceGrant:
+      '这台设备已授权过。再次授权只会为这台设备签发新密钥，其他设备不受影响。',
   },
   grants: {
     title: '已授权应用',
@@ -166,6 +174,8 @@ const zhCN: typeof en = {
     title: '接入应用',
     desc: '注册可通过“问鼎AI账号一键授权”获取用户 API 密钥的自有产品。',
     create: '新建应用',
+    fixedClientId:
+      'Client ID（可选，仅新建时；桌面应用如 wd_wendingai_switch）',
     edit: '编辑应用',
     name: '名称',
     description: '描述',
@@ -207,7 +217,11 @@ const zhCN: typeof en = {
 
 const zhTW: typeof en = {
   ...zhCN,
-  nav: { authorizedApps: '已授權應用', oauthClients: '接入應用', apps: '問鼎應用' },
+  nav: {
+    authorizedApps: '已授權應用',
+    oauthClients: '接入應用',
+    apps: '問鼎應用',
+  },
   oauth: {
     ...zhCN.oauth,
     brand: '問鼎AI帳號一鍵授權',

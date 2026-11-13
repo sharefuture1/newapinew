@@ -35,7 +35,14 @@ export interface WendingAuthorizeInfo {
   scope: string
   user_group: string
   groups: { name: string; desc: string }[]
-  existing_grant: { id: number; created_at: number; scope: string } | null
+  existing_grant: {
+    id: number
+    created_at: number
+    scope: string
+    device_name?: string
+  } | null
+  /** Cleaned device name sent by a native (desktop) client, if any */
+  device_name?: string
   quota_per_unit: number
   max_quota: number
 }
@@ -48,6 +55,9 @@ export interface WendingAuthorizeParams {
   scope: string
   code_challenge: string
   code_challenge_method: string
+  /** Native clients only: stable per-installation id and display name */
+  device_id?: string
+  device_name?: string
 }
 
 export interface WendingApiResponse<T> {
@@ -69,6 +79,8 @@ export interface WendingOAuthGrantView {
   updated_at: number
   last_used_at: number
   revoked_at: number
+  device_id?: string
+  device_name?: string
   client_name: string
   client_icon_url: string
   client_homepage_url: string
@@ -118,4 +130,7 @@ export interface WendingOAuthClient {
 export type WendingOAuthClientInput = Omit<
   WendingOAuthClient,
   'id' | 'client_id' | 'has_secret' | 'created_at' | 'updated_at'
->
+> & {
+  /** Create only: optional fixed id (wd_[a-z0-9_]{3,40}) for native apps */
+  client_id?: string
+}
