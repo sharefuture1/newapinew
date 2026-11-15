@@ -31,10 +31,6 @@ interface CTAProps {
 export function CTA(props: CTAProps) {
   const { t } = useTranslation()
 
-  if (props.isAuthenticated) {
-    return null
-  }
-
   return (
     <section className='relative z-10 overflow-hidden px-6 py-24 md:py-32'>
       {/* Gradient mesh background */}
@@ -66,17 +62,41 @@ export function CTA(props: CTAProps) {
           )}
         </p>
         <div className='mt-8 flex items-center justify-center gap-3'>
-          <Button className='group rounded-lg' render={<Link to='/sign-up' />}>
-            {t('Get Started')}
-            <ArrowRight className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
-          </Button>
-          <Button
-            variant='outline'
-            className='border-border/50 hover:border-border hover:bg-muted/50 rounded-lg'
-            render={<Link to='/pricing' />}
-          >
-            {t('View Pricing')}
-          </Button>
+          {props.isAuthenticated ? (
+            <>
+              <Button
+                className='group rounded-lg'
+                render={<Link to='/dashboard' />}
+              >
+                {t('Go to Dashboard')}
+                <ArrowRight className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
+              </Button>
+              <Button
+                variant='outline'
+                className='border-border/50 hover:border-border hover:bg-muted/50 rounded-lg'
+                render={<Link to='/keys' />}
+              >
+                {t('Create API Key')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                className='group rounded-lg'
+                render={<Link to='/sign-up' />}
+              >
+                {t('Get Started')}
+                <ArrowRight className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
+              </Button>
+              <Button
+                variant='outline'
+                className='border-border/50 hover:border-border hover:bg-muted/50 rounded-lg'
+                render={<Link to='/pricing' />}
+              >
+                {t('View Pricing')}
+              </Button>
+            </>
+          )}
         </div>
       </AnimateInView>
     </section>

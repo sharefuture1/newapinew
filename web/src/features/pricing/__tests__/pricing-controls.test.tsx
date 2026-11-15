@@ -32,7 +32,6 @@ function toolbarProps(): PricingToolbarProps {
     filteredCount: 2,
     totalCount: 2,
     sortBy: 'name',
-    tokenUnit: 'M',
     showRechargePrice: false,
     viewMode: 'card',
     quotaTypeFilter: 'all',
@@ -41,7 +40,6 @@ function toolbarProps(): PricingToolbarProps {
     groupFilter: 'all',
     tagFilter: 'all',
     onSortChange: vi.fn(),
-    onTokenUnitChange: vi.fn(),
     onRechargePriceChange: vi.fn(),
     onViewModeChange: vi.fn(),
     onQuotaTypeChange: vi.fn(),
@@ -139,18 +137,10 @@ describe('pricing controls', () => {
     ).toBeVisible()
   })
 
-  it('changes the token unit and keeps the selected unit pressed when clicked again', async () => {
-    const props = toolbarProps()
-    const user = userEvent.setup()
-    const { rerender } = render(<PricingToolbar {...props} />)
-    await user.click(screen.getByRole('button', { name: '/1K' }))
-    expect(props.onTokenUnitChange).toHaveBeenCalledWith('K')
-    rerender(<PricingToolbar {...props} tokenUnit='K' />)
-    const selected = screen.getByRole('button', { name: '/1K' })
-    expect(selected).toHaveAttribute('aria-pressed', 'true')
-    await user.click(selected)
-    expect(selected).toHaveAttribute('aria-pressed', 'true')
-    expect(props.onTokenUnitChange).toHaveBeenCalledTimes(1)
+  it('shows per-1K prices only, without a per-1M unit option', () => {
+    render(<PricingToolbar {...toolbarProps()} />)
+    expect(screen.queryByRole('button', { name: '/1M' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '/1K' })).toBeNull()
   })
 
   it('changes the recharge display mode with an accessible selected state', async () => {

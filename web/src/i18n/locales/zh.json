@@ -153,6 +153,7 @@
     "180 days": "180 天",
     "192.168.1.1&#10;10.0.0.0/8": "192.168.1.1&#10;10.0.0.0/8",
     "1M": "1 个月",
+    "1K token": "1K token",
     "1M token": "1M token",
     "1W": "1 周",
     "2. Copy the application token": "2. 复制应用程序令牌",
@@ -7318,6 +7319,24 @@
     "Zhipu": "智谱",
     "Zhipu GLM": "智谱GLM",
     "Zhipu V4": "智谱 V4",
-    "Zoom": "缩放"
+    "Zoom": "缩放",
+    "Lowest input price": "最低输入价",
+    "Group price as low as": "分组价低至",
+    "Sort by lowest price": "按最低价排序",
+    "Failed to load models": "加载模型失败",
+    "The model list could not be loaded. Please retry.": "模型列表加载失败，请重试。",
+    "Low-cost models": "低价模型",
+    "View all {{count}} models": "查看全部 {{count}} 个模型",
+    "Appearance": "外观",
+    "Theme mode": "主题模式",
+    "Select theme mode": "选择主题模式",
+    "Color preset": "颜色预设",
+    "Select color preset": "选择颜色预设",
+    "Applied to every user and to visitors before sign-in.": "对所有用户及登录前的访客生效。",
+    "Preset styles are defined in the frontend theme CSS.": "预设样式由前端主题 CSS 定义。",
+    "Allow users to switch theme": "允许用户切换主题",
+    "When disabled, the theme and color preset above are forced for everyone.": "关闭后，上述主题与颜色预设将对所有用户强制生效。",
+    "Invalid theme mode": "主题模式无效",
+    "Invalid theme preset": "主题预设无效"
   }
 }

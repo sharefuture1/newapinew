@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { type TFunction } from 'i18next'
+import type { TFunction } from 'i18next'
 
 import type { TokenUnit } from './types'
 
@@ -140,8 +140,8 @@ export const TOKEN_UNIT_DIVISORS = {
   K: 1000,
 } as const
 
-/** Default token unit for pricing display */
-export const DEFAULT_TOKEN_UNIT: TokenUnit = 'M'
+/** Default token unit for pricing display. Public pricing shows per-1K prices. */
+export const DEFAULT_TOKEN_UNIT: TokenUnit = 'K'
 
 /** View mode options */
 export const VIEW_MODES = {

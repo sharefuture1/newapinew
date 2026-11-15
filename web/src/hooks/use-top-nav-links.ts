@@ -67,9 +67,10 @@ export function useTopNavLinks(): TopNavLink[] {
     links.push({ title: t('Home'), href: '/' })
   }
 
-  // Console -> /dashboard (new console path)
+  // Console -> /dashboard (new console path). Signed-out visitors get the
+  // in-page auth prompt instead of a route-guard bounce.
   if (modules?.console !== false) {
-    links.push({ title: t('Console'), href: '/dashboard' })
+    links.push({ title: t('Console'), href: '/dashboard', requiresAuth: !isAuthed })
   }
 
   // Pricing

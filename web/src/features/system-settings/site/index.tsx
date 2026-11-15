@@ -38,6 +38,9 @@ const defaultSiteSettings: SiteSettings = {
   'legal.privacy_policy': '',
   HeaderNavModules: '',
   SidebarModulesAdmin: '',
+  'appearance_setting.theme_mode': 'system',
+  'appearance_setting.theme_preset': 'default',
+  'appearance_setting.allow_user_theme': true,
 }
 
 export function SiteSettings() {

@@ -153,6 +153,7 @@
     "180 days": "180 ngày",
     "192.168.1.1&#10;10.0.0.0/8": "192.168.1.1&#10;10.0.0.0/8",
     "1M": "1M",
+    "1K token": "1K token",
     "1M token": "1M token",
     "1W": "1W",
     "2. Copy the application token": "2. Sao chép token ứng dụng",
@@ -7318,6 +7319,24 @@
     "Zhipu": "Zhipu",
     "Zhipu GLM": "Zhipu GLM",
     "Zhipu V4": "Zhipu V4",
-    "Zoom": "Zoom"
+    "Zoom": "Zoom",
+    "Lowest input price": "Giá đầu vào thấp nhất",
+    "Group price as low as": "Giá nhóm thấp nhất",
+    "Sort by lowest price": "Sắp xếp theo giá thấp nhất",
+    "Failed to load models": "Không thể tải mô hình",
+    "The model list could not be loaded. Please retry.": "Không thể tải danh sách mô hình. Vui lòng thử lại.",
+    "Low-cost models": "Mô hình giá thấp",
+    "View all {{count}} models": "Xem tất cả {{count}} mô hình",
+    "Appearance": "Giao diện",
+    "Theme mode": "Chế độ giao diện",
+    "Select theme mode": "Chọn chế độ giao diện",
+    "Color preset": "Bảng màu",
+    "Select color preset": "Chọn bảng màu",
+    "Applied to every user and to visitors before sign-in.": "Áp dụng cho mọi người dùng và khách trước khi đăng nhập.",
+    "Preset styles are defined in the frontend theme CSS.": "Kiểu cài sẵn được định nghĩa trong CSS giao diện phía trước.",
+    "Allow users to switch theme": "Cho phép người dùng chuyển giao diện",
+    "When disabled, the theme and color preset above are forced for everyone.": "Khi tắt, giao diện và bảng màu ở trên sẽ được áp dụng cho tất cả mọi người.",
+    "Invalid theme mode": "Chế độ giao diện không hợp lệ",
+    "Invalid theme preset": "Bảng màu không hợp lệ"
   }
 }

@@ -52,7 +52,7 @@ it('shows an explicit free request price alongside token prices with distinct un
     />
   )
   expect(screen.getAllByText('$0/request').length).toBeGreaterThan(0)
-  expect(screen.getAllByText('Input / 1M token').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('Input / 1K token').length).toBeGreaterThan(0)
   expect(screen.getAllByText('Price per request').length).toBeGreaterThan(0)
 })
 
@@ -503,8 +503,8 @@ it('uses the same recharge conversion and token unit in task condition prices', 
       }}
     />
   )
-  expect(screen.getAllByText('$5/1M token')).toHaveLength(2)
-  expect(screen.getAllByText('$3/1M token')).toHaveLength(2)
+  expect(screen.getAllByText('$0.005/1K token')).toHaveLength(2)
+  expect(screen.getAllByText('$0.003/1K token')).toHaveLength(2)
 })
 
 it('switches provider group prices, localized conditions and examples, and shows unconfigured providers', async () => {

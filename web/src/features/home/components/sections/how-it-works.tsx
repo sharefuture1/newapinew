@@ -16,15 +16,31 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { Link } from '@tanstack/react-router'
 import { Settings, Zap, BarChart3 } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AnimateInView } from '@/components/animate-in-view'
+import { Button } from '@/components/ui/button'
 
-export function HowItWorks() {
+interface HowItWorksProps {
+  isAuthenticated?: boolean
+}
+
+type StepHref = '/keys' | '/sign-up' | '/pricing' | '/dashboard'
+
+export function HowItWorks(props: HowItWorksProps) {
   const { t } = useTranslation()
 
-  const steps = [
+  const steps: {
+    num: string
+    title: string
+    desc: string
+    icon: ReactNode
+    href: StepHref
+    cta: string
+  }[] = [
     {
       num: '1',
       title: t('Configure'),
@@ -32,6 +48,8 @@ export function HowItWorks() {
         'Add your API keys, set up channels and configure access permissions'
       ),
       icon: <Settings className='size-6' strokeWidth={1.5} />,
+      href: props.isAuthenticated ? '/keys' : '/sign-up',
+      cta: t('Create API Key'),
     },
     {
       num: '2',
@@ -40,12 +58,16 @@ export function HowItWorks() {
         'Connect through OpenAI, Claude, Gemini, and other compatible API routes'
       ),
       icon: <Zap className='size-6' strokeWidth={1.5} />,
+      href: '/pricing',
+      cta: t('Model Pricing'),
     },
     {
       num: '3',
       title: t('Monitor'),
       desc: t('Track usage, costs and performance with real-time analytics'),
       icon: <BarChart3 className='size-6' strokeWidth={1.5} />,
+      href: props.isAuthenticated ? '/dashboard' : '/sign-up',
+      cta: t('Go to Dashboard'),
     },
   ]
 
@@ -81,6 +103,14 @@ export function HowItWorks() {
               <p className='text-muted-foreground max-w-[240px] text-sm leading-relaxed'>
                 {step.desc}
               </p>
+              <Button
+                variant='link'
+                size='sm'
+                className='text-primary mt-1 h-auto gap-1 p-0 text-sm'
+                render={<Link to={step.href} />}
+              >
+                {step.cta}
+              </Button>
             </AnimateInView>
           ))}
         </div>

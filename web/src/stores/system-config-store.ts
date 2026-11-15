@@ -38,6 +38,8 @@ export interface CurrencyConfig {
   customCurrencyExchangeRate: number
 }
 
+export type ThemeMode = 'light' | 'dark' | 'system'
+
 export interface SystemConfig {
   systemName: string
   logo: string
@@ -45,6 +47,18 @@ export interface SystemConfig {
   demoSiteEnabled?: boolean
   displayTokenStatEnabled?: boolean
   currency: CurrencyConfig
+  /** Admin-configured global theme mode. */
+  themeMode: ThemeMode
+  /** Admin-configured frontend color preset name. */
+  themePreset: string
+  /** When false, the admin theme is forced and users cannot switch. */
+  allowUserTheme: boolean
+}
+
+export const DEFAULT_APPEARANCE_CONFIG = {
+  themeMode: 'system' as ThemeMode,
+  themePreset: 'default',
+  allowUserTheme: true,
 }
 
 export const DEFAULT_CURRENCY_CONFIG: CurrencyConfig = {
@@ -76,6 +90,7 @@ export const useSystemConfigStore = create<SystemConfigState>()(
         systemName: DEFAULT_SYSTEM_NAME,
         logo: DEFAULT_LOGO,
         currency: { ...DEFAULT_CURRENCY_CONFIG },
+        ...DEFAULT_APPEARANCE_CONFIG,
       },
       loading: true,
       loadedLogoUrl: DEFAULT_LOGO,

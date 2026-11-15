@@ -111,13 +111,23 @@ export function PublicHeader(props: PublicHeaderProps) {
   if (loading) logoContent = <Skeleton className='size-full rounded-lg' />
 
   let authContent = (
-    <Button
-      size='sm'
-      className='h-8 rounded-lg px-3.5 text-xs font-medium'
-      render={<Link to='/sign-in' />}
-    >
-      {t('Sign in')}
-    </Button>
+    <div className='flex items-center gap-2'>
+      <Button
+        variant='ghost'
+        size='sm'
+        className='h-8 rounded-lg px-3 text-xs font-medium'
+        render={<Link to='/sign-in' />}
+      >
+        {t('Sign in')}
+      </Button>
+      <Button
+        size='sm'
+        className='h-8 rounded-lg px-3.5 text-xs font-medium'
+        render={<Link to='/sign-up' />}
+      >
+        {t('Sign up')}
+      </Button>
+    </div>
   )
   if (isAuthenticated) authContent = <ProfileDropdown />
   if (loading) authContent = <Skeleton className='h-8 w-20 rounded-lg' />
@@ -315,6 +325,15 @@ export function PublicHeader(props: PublicHeaderProps) {
               {showThemeSwitch && <ThemeSwitch />}
               {showAuthButtons && !loading && isAuthenticated && (
                 <ProfileDropdown />
+              )}
+              {showAuthButtons && !loading && !isAuthenticated && (
+                <Button
+                  size='sm'
+                  className='h-8 rounded-lg px-3 text-xs font-medium'
+                  render={<Link to='/sign-up' />}
+                >
+                  {t('Sign up')}
+                </Button>
               )}
               <Button
                 type='button'

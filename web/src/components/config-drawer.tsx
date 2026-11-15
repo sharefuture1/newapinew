@@ -62,6 +62,7 @@ import {
   type ThemeScale,
 } from '@/lib/theme-customization'
 import { cn } from '@/lib/utils'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { useSidebar } from './ui/sidebar'
 
@@ -74,6 +75,9 @@ export function ConfigDrawer() {
   const { resetTheme } = useTheme()
   const { resetLayout } = useLayout()
   const { resetCustomization } = useThemeCustomization()
+  const allowUserTheme = useSystemConfigStore(
+    (state) => state.config.allowUserTheme
+  )
 
   const handleReset = () => {
     setOpen(true)
@@ -106,8 +110,12 @@ export function ConfigDrawer() {
           </SheetDescription>
         </SheetHeader>
         <div className={sideDrawerFormClassName()}>
-          <ThemeConfig />
-          <PresetConfig />
+          {allowUserTheme !== false && (
+            <>
+              <ThemeConfig />
+              <PresetConfig />
+            </>
+          )}
           <FontConfig />
           <RadiusConfig />
           <ScaleConfig />

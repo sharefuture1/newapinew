@@ -25,6 +25,8 @@ import {
   type CurrencyConfig,
   type CurrencyDisplayType,
   type SystemConfig,
+  type ThemeMode,
+  DEFAULT_APPEARANCE_CONFIG,
   DEFAULT_CURRENCY_CONFIG,
 } from '@/stores/system-config-store'
 
@@ -100,7 +102,19 @@ export function mapStatusDataToConfig(
       | boolean
       | undefined,
     currency,
+    themeMode: normalizeThemeMode(data.theme_mode),
+    themePreset:
+      (data.theme_preset as string | undefined)?.trim() ||
+      DEFAULT_APPEARANCE_CONFIG.themePreset,
+    // Older servers omit the flag; keep users in control in that case.
+    allowUserTheme: data.allow_user_theme !== false,
   }
+}
+
+function normalizeThemeMode(value: unknown): ThemeMode {
+  return value === 'light' || value === 'dark' || value === 'system'
+    ? value
+    : DEFAULT_APPEARANCE_CONFIG.themeMode
 }
 
 /** Read the last known status from localStorage (survives reload, may be stale). */

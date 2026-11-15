@@ -16,7 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { THEME_PRESETS } from '@/lib/theme-customization'
+
 import { SystemInfoSection } from '../general/system-info-section'
+import { AppearanceSection } from './appearance-section'
 import {
   parseHeaderNavModules,
   parseSidebarModulesAdmin,
@@ -53,6 +56,33 @@ const SITE_SECTIONS = [
         }}
       />
     ),
+  },
+  {
+    id: 'appearance',
+    titleKey: 'Appearance',
+    build: (settings: SiteSettings) => {
+      const storedMode = settings['appearance_setting.theme_mode']
+      const storedPreset = settings['appearance_setting.theme_preset']
+      return (
+        <AppearanceSection
+          defaultValues={{
+            appearance_setting: {
+              theme_mode:
+                storedMode === 'light' || storedMode === 'dark'
+                  ? storedMode
+                  : 'system',
+              theme_preset: THEME_PRESETS.some(
+                (preset) => preset.value === storedPreset
+              )
+                ? storedPreset
+                : 'default',
+              allow_user_theme:
+                settings['appearance_setting.allow_user_theme'],
+            },
+          }}
+        />
+      )
+    },
   },
   {
     id: 'notice',

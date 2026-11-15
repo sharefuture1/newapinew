@@ -359,8 +359,8 @@ describe('task dynamic pricing', () => {
     assert.ok(tokenEntry)
     assert.equal(tokenEntry.unit, 'token')
     assert.equal(tokenEntry.value, 9.8)
-    assert.equal(getDynamicPriceUnitLabelKey(tokenEntry), '1M token')
-    assert.equal(getTaskUsagePriceUnitLabelKey('token'), '1M token')
+    assert.equal(getDynamicPriceUnitLabelKey(tokenEntry), '1K token')
+    assert.equal(getTaskUsagePriceUnitLabelKey('token'), '1K token')
     assert.equal(
       getDynamicPriceUnitLabelKey({
         key: 'p',

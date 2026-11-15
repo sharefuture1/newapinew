@@ -29,10 +29,14 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useTheme } from '@/context/theme-provider'
 import { cn } from '@/lib/utils'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 export function ThemeSwitch() {
   const { t } = useTranslation()
   const { theme, setTheme } = useTheme()
+  const allowUserTheme = useSystemConfigStore(
+    (state) => state.config.allowUserTheme
+  )
 
   /* Update theme-color meta tag
    * when theme is updated */
@@ -41,6 +45,10 @@ export function ThemeSwitch() {
     const metaThemeColor = document.querySelector("meta[name='theme-color']")
     if (metaThemeColor) metaThemeColor.setAttribute('content', themeColor)
   }, [theme])
+
+  if (allowUserTheme === false) {
+    return null
+  }
 
   return (
     <DropdownMenu modal={false}>

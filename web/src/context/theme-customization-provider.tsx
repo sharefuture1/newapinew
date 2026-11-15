@@ -45,6 +45,7 @@ import {
   THEME_STORAGE_KEYS,
   writeThemePreference,
 } from '@/lib/theme-storage'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 function applyAttribute(name: string, value: string | null) {
   if (typeof document === 'undefined') return
@@ -60,6 +61,8 @@ function applyAttribute(name: string, value: string | null) {
 type ThemeCustomizationContextType = {
   defaults: ThemeCustomization
   customization: ThemeCustomization
+  /** True when the admin forces the color preset for every user. */
+  presetLocked: boolean
   setPreset: (preset: ThemePreset) => void
   setFont: (font: ThemeFont) => void
   setRadius: (radius: ThemeRadius) => void
@@ -75,6 +78,7 @@ type ThemeCustomizationContextType = {
 const FALLBACK_CONTEXT: ThemeCustomizationContextType = {
   defaults: DEFAULT_THEME_CUSTOMIZATION,
   customization: DEFAULT_THEME_CUSTOMIZATION,
+  presetLocked: false,
   setPreset: () => {},
   setFont: () => {},
   setRadius: () => {},
@@ -125,20 +129,36 @@ export function ThemeCustomizationProvider(props: {
     )
   )
 
+  // Admin-forced appearance: when users may not switch, the server preset wins.
+  const allowUserTheme = useSystemConfigStore(
+    (state) => state.config.allowUserTheme
+  )
+  const configuredPreset = useSystemConfigStore(
+    (state) => state.config.themePreset
+  )
+  const forcedPreset: ThemePreset | null =
+    allowUserTheme === false &&
+    THEME_PRESET_VALUES.has(configuredPreset as ThemePreset)
+      ? (configuredPreset as ThemePreset)
+      : null
+  const effectivePreset = forcedPreset ?? preset
+
   // Mirror state to the <body> via data-* attributes so theme-presets.css can
   // override CSS variables at the right cascade layer.
   useEffect(() => {
     applyAttribute(
       'data-theme-preset',
-      preset === DEFAULT_THEME_CUSTOMIZATION.preset ? null : preset
+      effectivePreset === DEFAULT_THEME_CUSTOMIZATION.preset
+        ? null
+        : effectivePreset
     )
-  }, [preset])
+  }, [effectivePreset])
 
   // Resolve Auto into the preset font or the browser's sans-serif while
   // keeping an explicit Sans choice distinct from that browser fallback.
   useEffect(() => {
-    applyAttribute('data-theme-font', resolveThemeFont(font, preset))
-  }, [font, preset])
+    applyAttribute('data-theme-font', resolveThemeFont(font, effectivePreset))
+  }, [font, effectivePreset])
 
   useEffect(() => {
     applyAttribute(
@@ -158,13 +178,17 @@ export function ThemeCustomizationProvider(props: {
     applyAttribute('data-theme-content-layout', contentLayout)
   }, [contentLayout])
 
-  const setPreset = useCallback((value: ThemePreset) => {
-    _setPreset(value)
-    writeThemePreference(
-      THEME_STORAGE_KEYS.preset,
-      value === DEFAULT_THEME_CUSTOMIZATION.preset ? null : value
-    )
-  }, [])
+  const setPreset = useCallback(
+    (value: ThemePreset) => {
+      if (forcedPreset) return
+      _setPreset(value)
+      writeThemePreference(
+        THEME_STORAGE_KEYS.preset,
+        value === DEFAULT_THEME_CUSTOMIZATION.preset ? null : value
+      )
+    },
+    [forcedPreset]
+  )
 
   const setFont = useCallback((value: ThemeFont) => {
     _setFont(value)
@@ -209,7 +233,14 @@ export function ThemeCustomizationProvider(props: {
   const value = useMemo<ThemeCustomizationContextType>(
     () => ({
       defaults: DEFAULT_THEME_CUSTOMIZATION,
-      customization: { preset, font, radius, scale, contentLayout },
+      customization: {
+        preset: effectivePreset,
+        font,
+        radius,
+        scale,
+        contentLayout,
+      },
+      presetLocked: forcedPreset !== null,
       setPreset,
       setFont,
       setRadius,
@@ -218,7 +249,8 @@ export function ThemeCustomizationProvider(props: {
       resetCustomization,
     }),
     [
-      preset,
+      effectivePreset,
+      forcedPreset,
       font,
       radius,
       scale,

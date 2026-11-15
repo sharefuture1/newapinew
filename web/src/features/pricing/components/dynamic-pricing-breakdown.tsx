@@ -119,7 +119,7 @@ function breakdownPriceFieldLabel(
     return <span className='break-words whitespace-normal'>{field.label}</span>
   }
   return field.showTokenUnit
-    ? `${t(field.label)} / ${t('1M token')}`
+    ? `${t(field.label)} / ${t('1K token')}`
     : t(field.label)
 }
 
@@ -203,19 +203,30 @@ function formatBreakdownPrice(
   taskPriceOptions: DynamicPricingBreakdownProps['taskPriceOptions'],
   language: string
 ): string {
-  const amount =
+  let amount: string
+  if (
     field.labelKind === 'schema' ||
     field.unit === 'request' ||
     field.unit === 'image'
-      ? formatTaskUsageUnitPrice(value, { tokenUnit: 'M', ...taskPriceOptions })
-      : `${symbol}${(value * rate).toFixed(4)}`
+  ) {
+    amount = formatTaskUsageUnitPrice(
+      value,
+      { tokenUnit: 'K', ...taskPriceOptions },
+      field.unit
+    )
+  } else if (field.unit === 'token') {
+    // Chat token prices are declared per 1M tokens; show them per 1K.
+    amount = `${symbol}${((value * rate) / 1000).toFixed(6)}`
+  } else {
+    amount = `${symbol}${(value * rate).toFixed(4)}`
+  }
   if (field.unit === 'second') return `${amount}/${t('s')}`
   if (field.unit === 'count') {
     return `${amount}/${taskUsageUnitLabel(field, language, t('unit'))}`
   }
   if (field.unit === 'credit') return `${amount}/${t('credit')}`
   if (field.unit === 'token' && field.labelKind === 'schema') {
-    return `${amount}/${t('1M token')}`
+    return `${amount}/${t('1K token')}`
   }
   if (field.unit === 'request') return `${amount}/${t('request')}`
   if (field.unit === 'image') return `${amount}/${t('image')}`
