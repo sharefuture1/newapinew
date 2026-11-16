@@ -26,16 +26,14 @@ import {
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { useSystemConfigStore } from '@/stores/system-config-store'
+
 import { Hero } from '../components/sections/hero'
 
-vi.mock('@lobehub/icons', () => ({
-  CherryStudio: { Color: () => null },
-}))
 vi.mock('@/hooks/use-status', () => ({
-  useStatus: () => ({ status: undefined }),
-}))
-vi.mock('../components/hero-terminal-demo', () => ({
-  HeroTerminalDemo: () => null,
+  useStatus: () => ({
+    status: { server_address: 'https://gateway.example.com/' },
+  }),
 }))
 
 async function renderHero(isAuthenticated: boolean) {
@@ -63,29 +61,49 @@ async function renderHero(isAuthenticated: boolean) {
 }
 
 describe('landing hero actions', () => {
+  it('shows the site name as the wordmark', async () => {
+    useSystemConfigStore.setState((state) => ({
+      config: { ...state.config, systemName: 'WendingAI' },
+    }))
+    await renderHero(false)
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'WendingAI'
+    )
+    useSystemConfigStore.setState((state) => ({
+      config: { ...state.config, systemName: 'New API' },
+    }))
+  })
+
   it('offers sign-up and pricing to signed-out visitors', async () => {
     await renderHero(false)
 
-    expect(screen.getByRole('button', { name: 'Get Started' })).toHaveAttribute(
-      'href',
-      '/sign-up'
-    )
+    expect(
+      screen.getByRole('button', { name: 'Create API Key' })
+    ).toHaveAttribute('href', '/sign-up')
     expect(
       screen.getByRole('button', { name: 'View Pricing' })
     ).toHaveAttribute('href', '/pricing')
   })
 
-  it('offers console, key creation and pricing to signed-in users', async () => {
+  it('sends signed-in users to key creation', async () => {
     await renderHero(true)
 
-    expect(
-      screen.getByRole('button', { name: 'Go to Dashboard' })
-    ).toHaveAttribute('href', '/dashboard')
     expect(
       screen.getByRole('button', { name: 'Create API Key' })
     ).toHaveAttribute('href', '/keys')
     expect(
-      screen.getByRole('button', { name: 'Model Pricing' })
+      screen.getByRole('button', { name: 'View Pricing' })
     ).toHaveAttribute('href', '/pricing')
+  })
+
+  it('advertises the configured base URL and primary endpoint', async () => {
+    await renderHero(false)
+
+    expect(
+      screen.getByText('https://gateway.example.com/v1')
+    ).toBeVisible()
+    expect(screen.getByText('/chat/completions')).toBeVisible()
+    expect(screen.getByText('POST')).toBeVisible()
   })
 })

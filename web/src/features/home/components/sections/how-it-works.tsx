@@ -17,101 +17,63 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { Settings, Zap, BarChart3 } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ArrowUpRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-
-import { AnimateInView } from '@/components/animate-in-view'
-import { Button } from '@/components/ui/button'
 
 interface HowItWorksProps {
   isAuthenticated?: boolean
 }
 
-type StepHref = '/keys' | '/sign-up' | '/pricing' | '/dashboard'
-
 export function HowItWorks(props: HowItWorksProps) {
   const { t } = useTranslation()
 
-  const steps: {
-    num: string
-    title: string
-    desc: string
-    icon: ReactNode
-    href: StepHref
-    cta: string
-  }[] = [
+  const steps = [
     {
-      num: '1',
-      title: t('Configure'),
-      desc: t(
-        'Add your API keys, set up channels and configure access permissions'
-      ),
-      icon: <Settings className='size-6' strokeWidth={1.5} />,
-      href: props.isAuthenticated ? '/keys' : '/sign-up',
-      cta: t('Create API Key'),
+      num: '01',
+      title: t('Pick a model'),
+      desc: t('Browse the model square and compare price and endpoints.'),
+      href: '/pricing' as const,
     },
     {
-      num: '2',
-      title: t('Connect'),
-      desc: t(
-        'Connect through OpenAI, Claude, Gemini, and other compatible API routes'
-      ),
-      icon: <Zap className='size-6' strokeWidth={1.5} />,
-      href: '/pricing',
-      cta: t('Model Pricing'),
+      num: '02',
+      title: t('Create a key'),
+      desc: t('Generate an API key in the console.'),
+      href: props.isAuthenticated ? ('/keys' as const) : ('/sign-up' as const),
     },
     {
-      num: '3',
-      title: t('Monitor'),
-      desc: t('Track usage, costs and performance with real-time analytics'),
-      icon: <BarChart3 className='size-6' strokeWidth={1.5} />,
-      href: props.isAuthenticated ? '/dashboard' : '/sign-up',
-      cta: t('Go to Dashboard'),
+      num: '03',
+      title: t('Connect your app'),
+      desc: t('Fill in the base URL, key and model name.'),
+      href: props.isAuthenticated
+        ? ('/dashboard' as const)
+        : ('/sign-up' as const),
     },
   ]
 
   return (
-    <section className='border-border/40 relative z-10 border-t px-6 py-24 md:py-32'>
-      <div className='mx-auto max-w-6xl'>
-        <AnimateInView className='mb-16 text-center md:mb-20'>
-          <p className='text-muted-foreground mb-3 text-xs font-medium tracking-widest uppercase'>
-            {t('How It Works')}
-          </p>
-          <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
-            {t('Three steps to get started')}
-          </h2>
-        </AnimateInView>
-
-        <div className='grid gap-8 md:grid-cols-3 md:gap-12'>
-          {steps.map((step, i) => (
-            <AnimateInView
+    <section className='px-5 py-14 sm:px-8 md:py-20'>
+      <div className='mx-auto w-full max-w-container'>
+        <div className='border-border/60 border-t'>
+          {steps.map((step) => (
+            <Link
               key={step.num}
-              delay={i * 150}
-              animation='fade-up'
-              className='relative flex flex-col items-center text-center'
+              to={step.href}
+              className='group border-border/60 hover:bg-muted/30 grid grid-cols-[2.5rem_1fr_auto] items-center gap-4 border-b py-6 transition-colors sm:grid-cols-[4rem_12rem_1fr_auto] sm:gap-6 md:py-7'
             >
-              <div className='relative mb-6'>
-                <div className='text-muted-foreground border-border/50 bg-muted/30 flex size-16 items-center justify-center rounded-2xl border transition-colors'>
-                  {step.icon}
-                </div>
-                <div className='bg-foreground text-background absolute -top-2 -right-2 flex size-6 items-center justify-center rounded-full text-xs font-bold'>
-                  {step.num}
-                </div>
-              </div>
-              <h3 className='mb-2 text-base font-semibold'>{step.title}</h3>
-              <p className='text-muted-foreground max-w-[240px] text-sm leading-relaxed'>
+              <span className='text-muted-foreground font-mono text-xs tabular-nums'>
+                {step.num}
+              </span>
+              <span className='text-base font-semibold tracking-tight sm:text-lg'>
+                {step.title}
+              </span>
+              <span className='text-muted-foreground col-start-2 text-sm leading-relaxed sm:col-start-3'>
                 {step.desc}
-              </p>
-              <Button
-                variant='link'
-                size='sm'
-                className='text-primary mt-1 h-auto gap-1 p-0 text-sm'
-                render={<Link to={step.href} />}
-              >
-                {step.cta}
-              </Button>
-            </AnimateInView>
+              </span>
+              <ArrowUpRight
+                aria-hidden
+                className='text-muted-foreground group-hover:text-foreground col-start-3 row-start-1 size-4 justify-self-end transition-all duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 sm:col-start-4'
+              />
+            </Link>
           ))}
         </div>
       </div>

@@ -26,7 +26,7 @@ import { useTheme } from '@/context/theme-provider'
 import { isLikelyHtml } from '@/lib/content-format'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { CTA, Features, Hero, HowItWorks, Stats } from './components'
+import { Hero, HowItWorks } from './components'
 import { useHomePageContent } from './hooks'
 
 // Custom home content may be Markdown/HTML, which pulls in marked, dompurify
@@ -145,13 +145,10 @@ export function Home() {
     <PublicLayout showMainContainer={false}>
       <main>
         <Hero isAuthenticated={isAuthenticated} />
-        <Stats />
-        <Features />
-        <HowItWorks isAuthenticated={isAuthenticated} />
         <Suspense fallback={null}>
           <PricePreview />
         </Suspense>
-        <CTA isAuthenticated={isAuthenticated} />
+        <HowItWorks isAuthenticated={isAuthenticated} />
       </main>
       <Footer />
     </PublicLayout>

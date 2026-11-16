@@ -7337,6 +7337,15 @@
     "Allow users to switch theme": "ユーザーによるテーマ切り替えを許可",
     "When disabled, the theme and color preset above are forced for everyone.": "無効にすると、上記のテーマとカラープリセットが全員に強制されます。",
     "Invalid theme mode": "テーマモードが無効です",
-    "Invalid theme preset": "テーマプリセットが無効です"
+    "Invalid theme preset": "テーマプリセットが無効です",
+    "Connect your apps to large language models.": "アプリを大規模言語モデルに接続します。",
+    "Pick a model, create a key, make your first call.": "モデルを選び、キーを作成し、最初の呼び出しを。",
+    "Pick a model": "モデルを選ぶ",
+    "Browse the model square and compare price and endpoints.": "モデル広場で価格と利用可能なエンドポイントを比較します。",
+    "Create a key": "キーを作成",
+    "Generate an API key in the console.": "コンソールで API キーを作成します。",
+    "Connect your app": "アプリを接続",
+    "Fill in the base URL, key and model name.": "ベース URL、キー、モデル名を入力します。",
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "OpenAI 互換のクライアントならどれでも使えます。上のベース URL とコンソールで作成した API キーを入力してください。"
   }
 }

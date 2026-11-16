@@ -21,9 +21,7 @@ import { ArrowRight } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { AnimateInView } from '@/components/animate-in-view'
 import { GroupMultiplierBadge } from '@/components/group-badge'
-import { Badge } from '@/components/ui/badge'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
@@ -61,75 +59,17 @@ export function PricePreview() {
   }
 
   return (
-    <section className='border-border/40 relative z-10 border-t px-6 py-20 md:py-24'>
-      <div className='mx-auto max-w-6xl'>
-        <AnimateInView className='mb-10 text-center'>
-          <p className='text-muted-foreground mb-3 text-xs font-medium tracking-widest uppercase'>
-            {t('Model Pricing')}
-          </p>
-          <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
-            {t('Low-cost models')}
-          </h2>
-        </AnimateInView>
-
-        <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-          {cheapest.map((entry, index) => (
-            <AnimateInView
-              key={entry.model.model_name}
-              delay={index * 80}
-              animation='fade-up'
-            >
-              <div className='bg-card hover:ring-foreground/20 flex h-full flex-col gap-3 rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm'>
-                <div className='min-w-0'>
-                  <p
-                    className='truncate font-mono text-sm font-semibold'
-                    title={entry.model.model_name}
-                  >
-                    {entry.model.model_name}
-                  </p>
-                  {entry.model.vendor_name && (
-                    <Badge
-                      variant='secondary'
-                      className='mt-1 max-w-full font-normal'
-                    >
-                      <span className='truncate'>
-                        {entry.model.vendor_name}
-                      </span>
-                    </Badge>
-                  )}
-                </div>
-                <div className='mt-auto'>
-                  <p className='text-muted-foreground text-[11px] font-medium tracking-wide uppercase'>
-                    {t('Input')}
-                  </p>
-                  <p className='flex flex-wrap items-baseline gap-x-1 font-mono text-lg font-semibold tabular-nums'>
-                    <span>
-                      {formatBillingCurrencyFromUSD(
-                        entry.priceUSD / TOKEN_UNIT_DIVISORS.K,
-                        {
-                          digitsLarge: 4,
-                          digitsSmall: 6,
-                          abbreviate: false,
-                        }
-                      )}
-                    </span>
-                    <span className='text-muted-foreground text-[11px] font-normal'>
-                      / 1K tokens
-                    </span>
-                  </p>
-                  {entry.ratio < 1 && (
-                    <GroupMultiplierBadge
-                      ratio={entry.ratio}
-                      className='mt-2'
-                    />
-                  )}
-                </div>
-              </div>
-            </AnimateInView>
-          ))}
-        </div>
-
-        <div className='mt-8 flex justify-center'>
+    <section className='border-border/40 border-t px-5 py-14 sm:px-8 md:py-20'>
+      <div className='mx-auto w-full max-w-container'>
+        <div className='mb-8 flex flex-wrap items-end justify-between gap-4'>
+          <div>
+            <p className='text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase'>
+              {t('Model Pricing')}
+            </p>
+            <h2 className='text-2xl font-bold tracking-tight md:text-3xl'>
+              {t('Low-cost models')}
+            </h2>
+          </div>
           <Link
             to='/pricing'
             className='text-primary group inline-flex items-center gap-1.5 text-sm font-medium'
@@ -140,6 +80,52 @@ export function PricePreview() {
               className='size-3.5 transition-transform duration-200 group-hover:translate-x-0.5'
             />
           </Link>
+        </div>
+
+        <div className='border-border/60 grid border-t sm:grid-cols-2 lg:grid-cols-4'>
+          {cheapest.map((entry) => (
+            <div
+              key={entry.model.model_name}
+              className='border-border/60 hover:bg-muted/30 flex min-w-0 flex-col gap-3 border-b p-5 transition-colors sm:[&:nth-child(2n)]:border-l lg:[&:not(:first-child)]:border-l'
+            >
+              <div className='min-w-0'>
+                <p
+                  className='truncate font-mono text-sm font-semibold'
+                  title={entry.model.model_name}
+                >
+                  {entry.model.model_name}
+                </p>
+                {entry.model.vendor_name && (
+                  <p className='text-muted-foreground mt-1 truncate text-xs'>
+                    {entry.model.vendor_name}
+                  </p>
+                )}
+              </div>
+              <div className='mt-auto'>
+                <p className='text-muted-foreground text-[11px] font-medium tracking-wide uppercase'>
+                  {t('Input')}
+                </p>
+                <p className='flex flex-wrap items-baseline gap-x-1 font-mono text-lg font-semibold tabular-nums'>
+                  <span>
+                    {formatBillingCurrencyFromUSD(
+                      entry.priceUSD / TOKEN_UNIT_DIVISORS.K,
+                      {
+                        digitsLarge: 4,
+                        digitsSmall: 6,
+                        abbreviate: false,
+                      }
+                    )}
+                  </span>
+                  <span className='text-muted-foreground text-[11px] font-normal'>
+                    / 1K tokens
+                  </span>
+                </p>
+                {entry.ratio < 1 && (
+                  <GroupMultiplierBadge ratio={entry.ratio} className='mt-2' />
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

@@ -7337,6 +7337,15 @@
     "Allow users to switch theme": "Разрешить пользователям переключать тему",
     "When disabled, the theme and color preset above are forced for everyone.": "Если выключено, тема и цветовая схема выше применяются ко всем принудительно.",
     "Invalid theme mode": "Недопустимый режим темы",
-    "Invalid theme preset": "Недопустимый пресет темы"
+    "Invalid theme preset": "Недопустимый пресет темы",
+    "Connect your apps to large language models.": "Подключите приложения к большим языковым моделям.",
+    "Pick a model, create a key, make your first call.": "Выберите модель, создайте ключ, сделайте первый запрос.",
+    "Pick a model": "Выберите модель",
+    "Browse the model square and compare price and endpoints.": "Сравните модели по цене и доступным эндпоинтам.",
+    "Create a key": "Создайте ключ",
+    "Generate an API key in the console.": "Создайте API-ключ в консоли.",
+    "Connect your app": "Подключите приложение",
+    "Fill in the base URL, key and model name.": "Укажите базовый URL, ключ и название модели.",
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "Подойдёт любой клиент, совместимый с OpenAI: укажите базовый URL выше и API-ключ из консоли."
   }
 }

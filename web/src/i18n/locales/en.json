@@ -7337,6 +7337,15 @@
     "Allow users to switch theme": "Allow users to switch theme",
     "When disabled, the theme and color preset above are forced for everyone.": "When disabled, the theme and color preset above are forced for everyone.",
     "Invalid theme mode": "Invalid theme mode",
-    "Invalid theme preset": "Invalid theme preset"
+    "Invalid theme preset": "Invalid theme preset",
+    "Connect your apps to large language models.": "Connect your apps to large language models.",
+    "Pick a model, create a key, make your first call.": "Pick a model, create a key, make your first call.",
+    "Pick a model": "Pick a model",
+    "Browse the model square and compare price and endpoints.": "Browse the model square and compare price and endpoints.",
+    "Create a key": "Create a key",
+    "Generate an API key in the console.": "Generate an API key in the console.",
+    "Connect your app": "Connect your app",
+    "Fill in the base URL, key and model name.": "Fill in the base URL, key and model name.",
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console."
   }
 }

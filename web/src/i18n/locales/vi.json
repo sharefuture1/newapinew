@@ -7337,6 +7337,15 @@
     "Allow users to switch theme": "Cho phép người dùng chuyển giao diện",
     "When disabled, the theme and color preset above are forced for everyone.": "Khi tắt, giao diện và bảng màu ở trên sẽ được áp dụng cho tất cả mọi người.",
     "Invalid theme mode": "Chế độ giao diện không hợp lệ",
-    "Invalid theme preset": "Bảng màu không hợp lệ"
+    "Invalid theme preset": "Bảng màu không hợp lệ",
+    "Connect your apps to large language models.": "Kết nối ứng dụng của bạn với các mô hình ngôn ngữ lớn.",
+    "Pick a model, create a key, make your first call.": "Chọn mô hình, tạo khóa, thực hiện lệnh gọi đầu tiên.",
+    "Pick a model": "Chọn mô hình",
+    "Browse the model square and compare price and endpoints.": "Duyệt chợ mô hình và so sánh giá cùng điểm cuối khả dụng.",
+    "Create a key": "Tạo khóa",
+    "Generate an API key in the console.": "Tạo API Key trong bảng điều khiển.",
+    "Connect your app": "Kết nối ứng dụng",
+    "Fill in the base URL, key and model name.": "Điền địa chỉ, khóa và tên mô hình.",
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "Mọi ứng dụng tương thích OpenAI đều dùng được: điền địa chỉ ở trên cùng API Key tạo trong bảng điều khiển."
   }
 }

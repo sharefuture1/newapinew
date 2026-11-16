@@ -7337,6 +7337,15 @@
     "Allow users to switch theme": "允許使用者切換主題",
     "When disabled, the theme and color preset above are forced for everyone.": "關閉後，上述主題與顏色預設將對所有使用者強制生效。",
     "Invalid theme mode": "主題模式無效",
-    "Invalid theme preset": "主題預設無效"
+    "Invalid theme preset": "主題預設無效",
+    "Connect your apps to large language models.": "為你的應用連接大型語言模型。",
+    "Pick a model, create a key, make your first call.": "選擇模型，取得金鑰，開始第一次呼叫。",
+    "Pick a model": "選擇模型",
+    "Browse the model square and compare price and endpoints.": "在模型廣場依價格與可用介面挑選。",
+    "Create a key": "取得金鑰",
+    "Generate an API key in the console.": "在主控台建立 API Key。",
+    "Connect your app": "接入應用",
+    "Fill in the base URL, key and model name.": "填入位址、金鑰與模型名稱。",
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "任何相容 OpenAI 的用戶端都可以使用：填入上方位址與主控台建立的 API Key 即可。"
   }
 }

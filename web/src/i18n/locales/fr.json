@@ -7337,6 +7337,15 @@
     "Allow users to switch theme": "Autoriser les utilisateurs à changer de thème",
     "When disabled, the theme and color preset above are forced for everyone.": "Lorsque cette option est désactivée, le thème et le préréglage ci-dessus sont imposés à tous.",
     "Invalid theme mode": "Mode de thème invalide",
-    "Invalid theme preset": "Préréglage de thème invalide"
+    "Invalid theme preset": "Préréglage de thème invalide",
+    "Connect your apps to large language models.": "Connectez vos applications aux grands modèles de langage.",
+    "Pick a model, create a key, make your first call.": "Choisissez un modèle, créez une clé, faites votre premier appel.",
+    "Pick a model": "Choisir un modèle",
+    "Browse the model square and compare price and endpoints.": "Parcourez le catalogue et comparez les prix et les points de terminaison.",
+    "Create a key": "Créer une clé",
+    "Generate an API key in the console.": "Générez une clé API dans la console.",
+    "Connect your app": "Connecter votre application",
+    "Fill in the base URL, key and model name.": "Renseignez l'URL de base, la clé et le nom du modèle.",
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "Tout client compatible OpenAI fonctionne : renseignez l'URL de base ci-dessus avec une clé API créée dans la console."
   }
 }
