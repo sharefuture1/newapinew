@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { ErrorState } from '@/components/error-state'
 import { PublicLayout } from '@/components/layout'
 import { PageTransition } from '@/components/page-transition'
 
@@ -29,10 +30,16 @@ import {
   PricingTable,
   PricingSidebar,
   PricingToolbar,
+  PricingAdvantageBar,
   ModelCardGrid,
   ModelDetailsDrawer,
 } from './components'
-import { EXCLUDED_GROUPS, VIEW_MODES } from './constants'
+import {
+  DEFAULT_TOKEN_UNIT,
+  EXCLUDED_GROUPS,
+  SORT_OPTIONS,
+  VIEW_MODES,
+} from './constants'
 import { useFilters } from './hooks/use-filters'
 import { usePricingData } from './hooks/use-pricing-data'
 
@@ -50,6 +57,8 @@ export function Pricing() {
     endpointMap,
     autoGroups,
     isLoading,
+    error,
+    refetch,
     priceRate,
     usdExchangeRate,
   } = usePricingData()
@@ -62,7 +71,6 @@ export function Pricing() {
     quotaTypeFilter,
     endpointTypeFilter,
     tagFilter,
-    tokenUnit,
     viewMode,
     showRechargePrice,
     setSearchInput,
@@ -72,7 +80,6 @@ export function Pricing() {
     setQuotaTypeFilter,
     setEndpointTypeFilter,
     setTagFilter,
-    setTokenUnit,
     setViewMode,
     setShowRechargePrice,
     filteredModels,
@@ -82,6 +89,8 @@ export function Pricing() {
     clearFilters,
     clearSearch,
   } = useFilters(models || [])
+
+  const tokenUnit = DEFAULT_TOKEN_UNIT
 
   const handleModelClick = useCallback((modelName: string) => {
     setSelectedModelName(modelName)
@@ -105,12 +114,33 @@ export function Pricing() {
     [usableGroup]
   )
 
+  const groupRatios = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(usableGroup || {}).map(([group, detail]) => [
+          group,
+          detail.ratio,
+        ])
+      ),
+    [usableGroup]
+  )
+
   const handleClearAll = useCallback(() => {
     clearFilters()
     clearSearch()
   }, [clearFilters, clearSearch])
 
   const renderPricingContent = () => {
+    if (error && (models?.length ?? 0) === 0) {
+      return (
+        <ErrorState
+          title={t('Failed to load models')}
+          description={t('The model list could not be loaded. Please retry.')}
+          onRetry={() => refetch()}
+        />
+      )
+    }
+
     if (filteredModels.length === 0) {
       return (
         <EmptyState
@@ -178,7 +208,7 @@ export function Pricing() {
         />
         <PageTransition className='relative mx-auto w-full max-w-[1800px] px-3 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 xl:px-8'>
           <header className='mx-auto mb-5 max-w-3xl pt-5 text-center sm:mb-10 sm:pt-10'>
-            <h1 className='text-[clamp(2rem,5.5vw,3.5rem)] leading-[1.15] font-bold tracking-tight'>
+            <h1 className='text-[clamp(1.75rem,4.5vw,2.75rem)] leading-[1.15] font-bold tracking-tight'>
               {t('Model Square')}
             </h1>
             <p className='text-muted-foreground/80 mt-3 text-sm sm:mt-4 sm:text-base'>
@@ -202,7 +232,14 @@ export function Pricing() {
             />
           </header>
 
-          <div className='grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>
+          <PricingAdvantageBar
+            models={filteredModels}
+            groupRatios={groupRatios}
+            selectedGroup={groupFilter}
+            onSortByLowestPrice={() => setSortBy(SORT_OPTIONS.INPUT_PRICE_LOW)}
+          />
+
+          <div className='mt-4 grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>
             <PricingSidebar
               quotaTypeFilter={quotaTypeFilter}
               endpointTypeFilter={endpointTypeFilter}
@@ -230,8 +267,6 @@ export function Pricing() {
                 totalCount={models?.length}
                 sortBy={sortBy}
                 onSortChange={setSortBy}
-                tokenUnit={tokenUnit}
-                onTokenUnitChange={setTokenUnit}
                 showRechargePrice={showRechargePrice}
                 onRechargePriceChange={setShowRechargePrice}
                 viewMode={viewMode}

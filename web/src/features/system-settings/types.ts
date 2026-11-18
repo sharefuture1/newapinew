@@ -154,6 +154,9 @@ export type SiteSettings = {
   'legal.privacy_policy': string
   HeaderNavModules: string
   SidebarModulesAdmin: string
+  'appearance_setting.theme_mode': string
+  'appearance_setting.theme_preset': string
+  'appearance_setting.allow_user_theme': boolean
 }
 
 export type AuthSettings = {

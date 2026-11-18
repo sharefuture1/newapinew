@@ -114,7 +114,7 @@ export function getTaskUsagePriceUnitLabelKey(
   unit: BillingUsageUnit | undefined
 ): string {
   if (unit === 'second') return 'second'
-  if (unit === 'token') return '1M token'
+  if (unit === 'token') return '1K token'
   if (unit === 'credit') return 'credit'
   return 'unit'
 }
@@ -125,8 +125,8 @@ export function getDynamicPriceUnitLabelKey(
   if (entry.unit === 'second') return 's'
   if (entry.unit === 'count') return 'unit'
   if (entry.unit === 'credit') return 'credit'
-  // Chat token entries also use unit 'token' but keep the 1M-token label.
-  if (entry.unit === 'token' && !entry.variable) return '1M token'
+  // Chat token entries also use unit 'token' but keep the per-token-unit label.
+  if (entry.unit === 'token' && !entry.variable) return '1K token'
   if (entry.unit === 'request') return 'request'
   if (entry.unit === 'image') return 'image'
   return null
@@ -225,12 +225,17 @@ export function formatDynamicUnitPrice(
 
 export function formatTaskUsageUnitPrice(
   valuePerUnit: number,
-  options: DynamicPriceOptions
+  options: DynamicPriceOptions,
+  unit?: DynamicPriceEntry['unit']
 ): string {
   const groupRatio = options.groupRatioMultiplier ?? 1
   const priceRate = options.priceRate ?? 1
   const usdExchangeRate = options.usdExchangeRate ?? 1
-  const priceUSD = valuePerUnit * groupRatio
+  // Task token prices are declared in the billing expression per 1M tokens.
+  // Convert them to the public display unit without touching the expression.
+  const tokenUnitDivisor =
+    unit === 'token' ? TOKEN_UNIT_DIVISORS[options.tokenUnit] : 1
+  const priceUSD = (valuePerUnit * groupRatio) / tokenUnitDivisor
   const displayPrice = applyRechargeRate(
     priceUSD,
     options.showRechargePrice ?? false,
@@ -317,7 +322,11 @@ export function getDynamicPriceEntries(
           shortLabel: field,
           labelKind: 'schema',
           value,
-          formatted: formatTaskUsageUnitPrice(value, options),
+          formatted: formatTaskUsageUnitPrice(
+            value,
+            options,
+            definition.unit
+          ),
           unit: definition.unit,
           unitLabel: definition.unitLabel,
           description: definition.description,
@@ -445,11 +454,11 @@ export function getDynamicPricingSummary(
       value: min,
       minValue: min,
       maxValue: max,
-      formatted: formatTaskUsageUnitPrice(min, options),
+      formatted: formatTaskUsageUnitPrice(min, options, entry.unit),
       formattedRange:
         min === max
           ? undefined
-          : `${formatTaskUsageUnitPrice(min, options)} – ${formatTaskUsageUnitPrice(max, options)}`,
+          : `${formatTaskUsageUnitPrice(min, options, entry.unit)} – ${formatTaskUsageUnitPrice(max, options, entry.unit)}`,
     }))
     const primaryKeys = new Set(
       summaries.flatMap((summary) =>
@@ -553,7 +562,7 @@ export function getDynamicPricingSummary(
         formattedRange:
           range.min === range.max
             ? undefined
-            : `${formatTaskUsageUnitPrice(range.min, options)} – ${formatTaskUsageUnitPrice(range.max, options)}`,
+            : `${formatTaskUsageUnitPrice(range.min, options, entry.unit)} – ${formatTaskUsageUnitPrice(range.max, options, entry.unit)}`,
       }
     })
   }

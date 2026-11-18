@@ -52,6 +52,9 @@ function AuthorizeRoute() {
         scope: get('scope'),
         code_challenge: get('code_challenge'),
         code_challenge_method: get('code_challenge_method'),
+        ...(search.get('device_id')
+          ? { device_id: get('device_id'), device_name: get('device_name') }
+          : {}),
       }}
     />
   )

@@ -15,6 +15,7 @@ import (
 	"github.com/QuantumNous/new-api/oauth"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
+	"github.com/QuantumNous/new-api/setting/appearance_setting"
 	"github.com/QuantumNous/new-api/setting/console_setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/system_setting"
@@ -62,6 +63,9 @@ func GetStatus(c *gin.Context) {
 		"telegram_oauth_configured":   oauth.TelegramConfigurationError() == nil,
 		"telegram_bot_name":           common.TelegramBotName,
 		"theme":                       "default",
+		"theme_mode":                  appearance_setting.GetThemeMode(),
+		"theme_preset":                appearance_setting.GetAppearanceSetting().ThemePreset,
+		"allow_user_theme":            appearance_setting.GetAppearanceSetting().AllowUserTheme,
 		"system_name":                 common.SystemName,
 		"logo":                        common.Logo,
 		"footer_html":                 common.Footer,

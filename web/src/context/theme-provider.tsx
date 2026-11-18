@@ -30,6 +30,7 @@ import {
   THEME_STORAGE_KEYS,
   writeThemePreference,
 } from '@/lib/theme-storage'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 type Theme = 'dark' | 'light' | 'system'
 type ResolvedTheme = Exclude<Theme, 'system'>
@@ -85,12 +86,27 @@ export function ThemeProvider({
     resolveTheme(theme)
   )
 
+  // Admin-configured appearance. When user switching is disabled the server
+  // theme wins and local preferences are ignored without being erased.
+  const allowUserTheme = useSystemConfigStore(
+    (state) => state.config.allowUserTheme
+  )
+  const configuredTheme = useSystemConfigStore(
+    (state) => state.config.themeMode
+  )
+  const forcedTheme: Theme | null =
+    allowUserTheme === false && THEMES.has(configuredTheme as Theme)
+      ? (configuredTheme as Theme)
+      : null
+  const effectiveTheme = forcedTheme ?? theme
+
   useEffect(() => {
     const root = window.document.documentElement
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
 
     const applyTheme = () => {
-      const nextResolvedTheme = theme === 'system' ? getSystemTheme() : theme
+      const nextResolvedTheme =
+        effectiveTheme === 'system' ? getSystemTheme() : effectiveTheme
       root.classList.remove('light', 'dark')
       root.classList.add(nextResolvedTheme)
       setResolvedTheme(nextResolvedTheme)
@@ -101,30 +117,32 @@ export function ThemeProvider({
     mediaQuery.addEventListener('change', applyTheme)
 
     return () => mediaQuery.removeEventListener('change', applyTheme)
-  }, [theme])
+  }, [effectiveTheme])
 
   const setTheme = useCallback(
     (theme: Theme) => {
+      if (forcedTheme) return
       writeThemePreference(storageKey, theme)
       _setTheme(theme)
     },
-    [storageKey]
+    [forcedTheme, storageKey]
   )
 
   const resetTheme = useCallback(() => {
+    if (forcedTheme) return
     writeThemePreference(storageKey, null)
     _setTheme(defaultTheme)
-  }, [defaultTheme, storageKey])
+  }, [defaultTheme, forcedTheme, storageKey])
 
   const contextValue = useMemo(
     () => ({
       defaultTheme,
       resolvedTheme,
       resetTheme,
-      theme,
+      theme: effectiveTheme,
       setTheme,
     }),
-    [defaultTheme, resolvedTheme, resetTheme, theme, setTheme]
+    [defaultTheme, effectiveTheme, resolvedTheme, resetTheme, setTheme]
   )
 
   return (

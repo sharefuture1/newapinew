@@ -46,7 +46,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { cn } from '@/lib/utils'
 
 import { getSortLabels, type SortOption, type ViewMode } from '../constants'
-import type { PricingModel, PricingVendor, TokenUnit } from '../types'
+import type { PricingModel, PricingVendor } from '../types'
 import { PricingSidebar } from './pricing-sidebar'
 
 export interface PricingToolbarProps {
@@ -54,8 +54,6 @@ export interface PricingToolbarProps {
   totalCount?: number
   sortBy: string
   onSortChange: (value: string) => void
-  tokenUnit: TokenUnit
-  onTokenUnitChange: (value: TokenUnit) => void
   showRechargePrice: boolean
   onRechargePriceChange: (value: boolean) => void
   viewMode: ViewMode
@@ -134,21 +132,6 @@ export function PricingToolbar(props: PricingToolbarProps) {
             <ToggleGroupItem value='standard'>{t('Standard')}</ToggleGroupItem>
             <ToggleGroupItem value='recharge'>{t('Recharge')}</ToggleGroupItem>
           </ToggleGroup>
-          <ToggleGroup
-            value={[props.tokenUnit]}
-            onValueChange={(values) => {
-              if (values[0] === 'M' || values[0] === 'K') {
-                props.onTokenUnitChange(values[0])
-              }
-            }}
-            variant='outline'
-            size='sm'
-            aria-label={t('Token unit')}
-          >
-            <ToggleGroupItem value='M'>/1M</ToggleGroupItem>
-            <ToggleGroupItem value='K'>/1K</ToggleGroupItem>
-          </ToggleGroup>
-
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger
               render={
