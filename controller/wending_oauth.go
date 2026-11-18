@@ -327,7 +327,7 @@ func PostWendingOAuthAuthorize(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	code, err := model.CreateWendingOAuthCode(grant, req.RedirectUri, req.CodeChallenge)
+	code, err := model.CreateWendingOAuthCodeWithScope(grant, req.RedirectUri, req.CodeChallenge, scope)
 	if err != nil {
 		common.ApiError(c, err)
 		return

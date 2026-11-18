@@ -514,6 +514,12 @@ func IssueWendingOAuthGrant(userId int, client *WendingOAuthClient, settings Wen
 	}
 	name := wendingOAuthTokenName(client.Name, settings.DeviceName)
 	now := common.GetTimestamp()
+	if existing != nil && existing.TokenId <= 0 {
+		// A sign-in-only grant (login/email scope) has no API key yet: attach a
+		// new key to it and keep the sign-in scopes, instead of looking up
+		// token 0 (which fails with "Token ID or user ID is empty").
+		return attachWendingOAuthKeyToGrant(existing, userId, name, now, settings, maxTokens)
+	}
 	if existing != nil {
 		token, err := GetTokenByIds(existing.TokenId, userId)
 		if err == nil {
@@ -538,11 +544,13 @@ func IssueWendingOAuthGrant(userId int, client *WendingOAuthClient, settings Wen
 			if err != nil {
 				return nil, false, err
 			}
+			// Keep sign-in scopes (login/email) that the grant already holds.
+			mergedScope := WendingOAuthMergeScopes(existing.Scope, settings.Scope)
 			if err := DB.Model(&WendingOAuthGrant{}).Where("id = ?", existing.Id).
-				Updates(map[string]any{"scope": settings.Scope, "updated_at": now, "device_name": settings.DeviceName}).Error; err != nil {
+				Updates(map[string]any{"scope": mergedScope, "updated_at": now, "device_name": settings.DeviceName}).Error; err != nil {
 				return nil, false, err
 			}
-			existing.Scope, existing.UpdatedAt, existing.DeviceName = settings.Scope, now, settings.DeviceName
+			existing.Scope, existing.UpdatedAt, existing.DeviceName = mergedScope, now, settings.DeviceName
 			return existing, true, nil
 		}
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -599,6 +607,58 @@ func IssueWendingOAuthGrant(userId int, client *WendingOAuthClient, settings Wen
 	if err != nil {
 		return nil, false, err
 	}
+	return grant, false, nil
+}
+
+// attachWendingOAuthKeyToGrant creates an API key for an existing grant that
+// has none (TokenId <= 0, e.g. a login-only grant) and merges the new scope
+// into the grant's scope.
+func attachWendingOAuthKeyToGrant(grant *WendingOAuthGrant, userId int, name string, now int64, settings WendingOAuthTokenSettings, maxTokens int) (*WendingOAuthGrant, bool, error) {
+	count, err := CountUserTokens(userId)
+	if err != nil {
+		return nil, false, err
+	}
+	if maxTokens > 0 && int(count) >= maxTokens {
+		return nil, false, common.NewMessage("Maximum number of tokens reached ({{max}})", map[string]any{"max": maxTokens})
+	}
+	key, err := common.GenerateKey()
+	if err != nil {
+		return nil, false, err
+	}
+	token := &Token{
+		UserId:              userId,
+		Name:                name,
+		Key:                 key,
+		Status:              common.TokenStatusEnabled,
+		CreatedTime:         now,
+		AccessedTime:        now,
+		ExpiredTime:         -1,
+		RemainQuota:         settings.RemainQuota,
+		UnlimitedQuota:      settings.UnlimitedQuota,
+		ModelLimitsEnabled:  settings.ModelLimitsEnabled,
+		ModelLimits:         settings.ModelLimits,
+		Group:               settings.Group,
+		AllowUserQuotaQuery: true,
+	}
+	scope := WendingOAuthMergeScopes(grant.Scope, settings.Scope)
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(token).Error; err != nil {
+			return err
+		}
+		res := tx.Model(&WendingOAuthGrant{}).Where("id = ? AND token_id <= 0", grant.Id).
+			Updates(map[string]any{"token_id": token.Id, "scope": scope, "updated_at": now, "device_name": settings.DeviceName})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			return errors.New("oauth grant changed concurrently, please retry")
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	grant.TokenId, grant.Scope, grant.UpdatedAt, grant.DeviceName = token.Id, scope, now, settings.DeviceName
 	return grant, false, nil
 }
 
