@@ -114,7 +114,9 @@ export function getTaskUsagePriceUnitLabelKey(
   unit: BillingUsageUnit | undefined
 ): string {
   if (unit === 'second') return 'second'
-  if (unit === 'token') return '1K token'
+  // Task expressions declare token prices per 1M tokens; logs and admin
+  // editors show that raw value, so keep the matching 1M label here.
+  if (unit === 'token') return '1M token'
   if (unit === 'credit') return 'credit'
   return 'unit'
 }
