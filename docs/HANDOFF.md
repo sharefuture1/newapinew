@@ -1,6 +1,68 @@
-# HANDOFF – 问鼎AI账号一键授权 (Wending OAuth)
+# HANDOFF – 问鼎AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-10 (UTC+7) – added the sign-in (`login`) scope for the shop, **not deployed**_
+_Last updated: 2026-11-18 01:40 EST – branch `wending-integration`, go.wending.ai on Vercel. Backend binary NOT redeployed._
+
+## 2026-11-18: `wending-integration` + go.wending.ai (Vercel)
+
+**Branch `wending-integration`** (PR → `wending`), based on `wending` 45b8cf4 (= production 44e03dc + docs):
+- merges `wending-desktop-auth` (desktop/loopback one-click auth with per-device grants, fixed
+  client ids, `GET /api/oauth/clients/:id`; per-1K pricing; admin-forced appearance; editorial
+  landing). Note: `wending-desktop-auth` alone was branched **before** the login scope and would
+  drop shop/21 sign-in if deployed by itself – always deploy from `wending-integration`/`wending`.
+  Only conflict: `web/src/features/wending/i18n.ts` (kept both key sets).
+- **fix**: user with a login-only grant (token_id 0) asking for the `api` scope failed with
+  "Token ID or user ID is empty". A key is now attached to that grant (transaction, guarded by
+  `token_id <= 0`); rotations merge scopes so `login`/`email` survive; the code carries only the
+  requested scope. Regression test `TestWendingAPIScopeAfterLoginOnlyGrant`.
+- **fix**: usage-log details / admin task pricing editors said "/1K token" for raw per-1M
+  expression prices (1000x overstated); they keep "/1M token". Public pricing stays per-1K.
+- **fix**: new landing page fetched `/api/pricing` for anonymous visitors although pricing is
+  login-only in production (`HeaderNavModules.pricing.requireAuth=true`) → 401 → refresh →
+  redirect to /sign-in. Now only fetched when visible (test `price-preview.test.tsx`).
+- `web/vercel.json` for the standalone frontend.
+- DB impact when this binary is eventually deployed (AutoMigrate, additive): columns
+  `wending_oauth_grants.device_id` / `device_name`. Not deployed yet.
+- **huabu-nav**: the "server-only huabu-nav modification" does not exist in the running binary.
+  `/opt/new-api/upgrades/20261020-230130-huabu-nav/` shows a custom rc45 build was prepared on
+  2026-10-20, but the binary that ran afterwards (`new-api.bak-20261105-131408`) has the same
+  sha256 as the stock rc45 binary (rolled back); since 2026-11-05 production runs builds from this
+  repo. The huabu entry today comes from the DB: the sidebar "问鼎应用" group (OAuth client
+  `launch_url`) and the `About` option text. Nothing to recover; no code re-implemented.
+
+Checks: `go build`, `go vet ./controller ./model ./router`, `go test ./controller ./model
+./middleware ./router ./service ./common` pass; `cd web && bun run test` 203 files pass,
+`bunx tsgo -b` pass, `bun run build` pass.
+
+### go.wending.ai (Vercel project `wending-go`)
+
+- Vercel team `sharefuture1s-projects`, project `wending-go` (prj_0XHZGNfKYZP8zUc1KM6wMBeUrN5t),
+  root `web/`, no Git auto-deploy (deployed explicitly from a branch/sha via the API).
+  Current production: dpl_EM758hkun9hC33QErmPzCCxJ3VnP (wending-integration 5f891662a);
+  previous: dpl_8zEgfBbyV7nL1nBecyEdY6KaUwH6 (0be55aff1, landing bounced anonymous visitors).
+  Env `WENDING_EDGE_SECRET` (sensitive; copy kept on the ops box only).
+- `web/vercel.json`: `/api`, `/pg`, `/v1`, `/mj` are proxied to `https://api.wending.ai`
+  (same-origin for the browser, so the refresh cookie lands on go.wending.ai), rewrite caching
+  disabled, header `x-wending-edge: $WENDING_EDGE_SECRET` added; `/static/*` immutable; SPA
+  fallback. `/dashboard` is a SPA route and is not proxied.
+- DNS (Cloudflare zone wending.ai): `go.wending.ai CNAME cname.vercel-dns.com`, DNS-only
+  (record id 422ad44c08802e8ba35353fa80c9dcdd). Overrides the proxied `*.wending.ai` wildcard.
+- **Backend pending (needs a restart, not done):**
+  1. `SESSION_COOKIE_TRUSTED_URL=https://api.wending.ai,https://go.wending.ai` in
+     `/opt/new-api/env.conf`. It is read from env once at startup (`common.InitSessionCookieSettings`),
+     not from DB options. Until then `POST /api/user/auth/refresh|logout` from go.wending.ai return
+     403 `AUTH_ORIGIN_FORBIDDEN`: sign-in works, but the session is lost on reload / after the
+     15-minute access token.
+  2. Caddy: staged `/etc/caddy/Caddyfile.go-staged` (validated) trusts `X-Real-IP` only when
+     `X-Wending-Edge` matches (`/etc/caddy/wending-edge.caddy`, root:caddy 0640) and strips the
+     header. Caddy runs with `admin off`, so `caddy reload` is impossible; applying needs
+     `systemctl restart caddy`. Until then all go.wending.ai visitors share Vercel egress IPs for
+     per-IP rate limits and logs.
+  3. Turnstile: the widget renders on go.wending.ai/sign-in without a domain error (checked in
+     headless Chrome), so no hostname change is needed.
+- Rollback: remove the domain from the Vercel project (or delete project `wending-go`) and delete
+  DNS record 422ad44c…; Caddy: `/etc/caddy/Caddyfile` is unchanged (backup
+  `Caddyfile.bak-go-vercel-20261118-011136`).
+
 
 ## What was done
 
