@@ -13,6 +13,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
+	"github.com/QuantumNous/new-api/setting/appearance_setting"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
 	"github.com/QuantumNous/new-api/setting/console_setting"
 	"github.com/QuantumNous/new-api/setting/model_setting"
@@ -262,6 +263,22 @@ func UpdateOption(c *gin.Context) {
 	case "theme.frontend":
 		if option.Value != "default" {
 			common.ApiErrorT(c, "The Classic frontend has been removed. The theme can only be set to default")
+			return
+		}
+	case "appearance_setting.theme_mode":
+		mode, ok := option.Value.(string)
+		if !ok || !appearance_setting.IsValidThemeMode(mode) {
+			common.ApiErrorT(c, "Invalid theme mode")
+			return
+		}
+	case "appearance_setting.theme_preset":
+		preset, ok := option.Value.(string)
+		if !ok {
+			common.ApiErrorT(c, "Invalid theme preset")
+			return
+		}
+		if err = appearance_setting.ValidateThemePreset(preset); err != nil {
+			common.ApiError(c, err)
 			return
 		}
 	case "GroupRatio":

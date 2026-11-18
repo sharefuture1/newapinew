@@ -45,3 +45,18 @@ runtime by `web/src/features/wending/i18n.ts` (`i18n.addResourceBundle`).
   Everything else applied cleanly; Go build, web build, OAuth tests and the e2e
   script pass on the rebased branch.
 - After any rebase: run `cd web && bun run build` so `routeTree.gen.ts` is regenerated, and commit it if it changed.
+
+## Branch `wending-integration` (2026-11-18): non-OAuth customizations
+
+`wending-integration` = `wending` + `wending-desktop-auth` (merged) + fixes. Besides the OAuth
+feature above it carries Stone's site/pricing/landing work, which **does touch upstream
+files** and will conflict on upstream merges (tested 2026-11-18 against upstream `main`
+669d77497: Go merges cleanly; conflicts only in `web/src/features/pricing/components/model-card.tsx`
+and `web/src/hooks/use-sidebar-data.ts`, plus locale JSON when merging tag rc.51).
+
+| Area | Upstream files |
+| --- | --- |
+| Admin-forced appearance (`appearance_setting`, exposed via `/api/status`) | `controller/misc.go`, `controller/option.go`, `setting/appearance_setting/appearance.go` (new), `web/src/context/theme-*.tsx`, `web/src/components/{theme-switch,config-drawer,command-menu}.tsx`, `web/src/features/system-settings/site/*`, `web/src/stores/system-config-store.ts`, `web/src/lib/status-query.ts`, `web/src/main.tsx` |
+| Per-1K public pricing, advantage bar | `web/src/features/pricing/**` (`DEFAULT_TOKEN_UNIT = 'K'`; raw task-expression prices in logs/admin editors keep the 1M label) |
+| Editorial landing page | `web/src/features/home/**` (old sections removed); price preview only fetches `/api/pricing` when pricing is visible to the visitor |
+| Standalone frontend on Vercel | `web/vercel.json` (fork-only) – see docs/HANDOFF.md § go.wending.ai |

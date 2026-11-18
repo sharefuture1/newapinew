@@ -192,3 +192,48 @@ func TestWendingClientTrustedFlagPersists(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, reloaded.Trusted)
 }
+
+// Regression: a user who first signed in (login-only grant, no API key) and
+// then authorizes the api scope used to fail with "Token ID or user ID is
+// empty" because the grant's token_id was 0.
+func TestWendingAPIScopeAfterLoginOnlyGrant(t *testing.T) {
+	env := setupWendingLoginTest(t, true)
+	verifier, challenge := wendingPKCE()
+	code, body := env.approveScope(challenge, wendingShopRedirect, "login email")
+	require.NotEmpty(t, code, "login approve failed: %v", body)
+	rec, _ := env.exchange(env.tokenForm(code, verifier, wendingShopRedirect))
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+
+	loginGrant, err := model.GetActiveWendingOAuthGrant(env.userId, env.client.ClientId)
+	require.NoError(t, err)
+	require.NotNil(t, loginGrant)
+	require.LessOrEqual(t, loginGrant.TokenId, 0)
+
+	code, body = env.approve(challenge, wendingTestRedirect)
+	require.NotEmpty(t, code, "api approve failed: %v", body)
+	rec, resp := env.exchange(env.tokenForm(code, verifier, wendingTestRedirect))
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	key := resp["access_token"].(string)
+	require.True(t, strings.HasPrefix(key, "sk-"), key)
+	_, err = model.GetWendingOAuthTokenByKey(strings.TrimPrefix(key, "sk-"))
+	require.NoError(t, err)
+
+	grant, err := model.GetActiveWendingOAuthGrant(env.userId, env.client.ClientId)
+	require.NoError(t, err)
+	require.Equal(t, loginGrant.Id, grant.Id, "the sign-in grant is reused, not duplicated")
+	require.Greater(t, grant.TokenId, 0)
+	require.True(t, model.WendingOAuthScopeHas(grant.Scope, "api"))
+	require.True(t, model.WendingOAuthScopeHas(grant.Scope, "login"))
+	require.True(t, model.WendingOAuthScopeHas(grant.Scope, "email"))
+
+	// Re-authorizing api rotates the same key and keeps the sign-in scopes.
+	code, body = env.approve(challenge, wendingTestRedirect)
+	require.NotEmpty(t, code, "api re-approve failed: %v", body)
+	rec, resp = env.exchange(env.tokenForm(code, verifier, wendingTestRedirect))
+	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+	require.NotEqual(t, key, resp["access_token"].(string))
+	again, err := model.GetActiveWendingOAuthGrant(env.userId, env.client.ClientId)
+	require.NoError(t, err)
+	require.Equal(t, grant.TokenId, again.TokenId)
+	require.True(t, model.WendingOAuthScopeHas(again.Scope, "login"))
+}

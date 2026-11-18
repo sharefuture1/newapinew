@@ -21,6 +21,8 @@ import { memo, useMemo, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
+import { GroupMultiplierBadge } from '@/components/group-badge'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { getLobeIcon } from '@/lib/lobe-icon'
@@ -37,7 +39,7 @@ import {
   isUnconfiguredTaskUsageModel,
 } from '../lib/dynamic-price'
 import { parseTags } from '../lib/filters'
-import { isTokenBasedModel } from '../lib/model-helpers'
+import { getDisplayGroupRatio, isTokenBasedModel } from '../lib/model-helpers'
 import { formatPrice, formatRequestPrice } from '../lib/price'
 import { taskPriceLabel, taskUsageUnitLabel } from '../lib/task-price-display'
 import type { PricingModel, PriceType, TokenUnit } from '../types'
@@ -63,6 +65,10 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   const showRechargePrice = props.showRechargePrice ?? false
   const isTokenBased = isTokenBasedModel(props.model)
   const tokenUnitLabel = tokenUnit === 'K' ? '1K' : '1M'
+  const displayGroupRatio = getDisplayGroupRatio(
+    props.model,
+    props.selectedGroup
+  )
   const tags = parseTags(props.model.tags)
   const groups = props.model.enable_groups || []
   const endpoints = props.model.supported_endpoint_types || []
@@ -227,20 +233,23 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
         : []),
     ]
     priceSummary = prices.map((price) => (
-      <div key={price.type} className='flex min-w-0 flex-col gap-1'>
-        <span className='text-muted-foreground text-xs'>{price.label}</span>
-        <span className='font-mono text-sm font-semibold tabular-nums'>
-          {formatPrice(
-            props.model,
-            price.type,
-            tokenUnit,
-            showRechargePrice,
-            priceRate,
-            usdExchangeRate,
-            props.selectedGroup
-          )}
-          <span className='text-muted-foreground text-xs font-normal'>
-            {' '}
+      <div key={price.type} className='flex min-w-0 flex-col gap-0.5'>
+        <span className='text-muted-foreground text-[11px] font-medium tracking-wide uppercase'>
+          {price.label}
+        </span>
+        <span className='flex min-w-0 flex-wrap items-baseline gap-x-1 font-mono text-base font-semibold tabular-nums'>
+          <span>
+            {formatPrice(
+              props.model,
+              price.type,
+              tokenUnit,
+              showRechargePrice,
+              priceRate,
+              usdExchangeRate,
+              props.selectedGroup
+            )}
+          </span>
+          <span className='text-muted-foreground text-[11px] font-normal whitespace-nowrap'>
             / {tokenUnitLabel}
           </span>
         </span>
@@ -267,7 +276,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
   }
 
   return (
-    <Card className='hover:ring-foreground/20 h-full min-w-0 gap-3 transition-colors'>
+    <Card className='hover:ring-foreground/20 h-full min-w-0 gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm'>
       <CardHeader className='flex flex-row items-start gap-3'>
         <div
           aria-hidden
@@ -287,12 +296,13 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
             {props.model.model_name}
           </h3>
           {props.model.vendor_name && (
-            <p
-              className='text-muted-foreground mt-1 truncate text-xs'
+            <Badge
+              variant='secondary'
+              className='mt-1 max-w-full font-normal'
               title={props.model.vendor_name}
             >
-              {props.model.vendor_name}
-            </p>
+              <span className='truncate'>{props.model.vendor_name}</span>
+            </Badge>
           )}
         </div>
         <CopyButton
@@ -330,7 +340,12 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
           aria-label={t('Pricing')}
           className='mt-auto flex min-w-0 flex-col gap-1.5'
         >
-          <ModelBillingModeBadge model={props.model} appearance='caption' />
+          <div className='flex min-w-0 flex-wrap items-center gap-1.5'>
+            <ModelBillingModeBadge model={props.model} appearance='caption' />
+            {displayGroupRatio < 1 && (
+              <GroupMultiplierBadge ratio={displayGroupRatio} />
+            )}
+          </div>
           {dynamicSummary?.providerCount && (
             <span className='text-muted-foreground text-xs break-words'>
               {t('{{count}} providers', {
@@ -340,7 +355,7 @@ export const ModelCard = memo(function ModelCard(props: ModelCardProps) {
                 ` · ${t('Not configured for some providers')}`}
             </span>
           )}
-          <div className='grid grid-cols-[repeat(auto-fit,minmax(88px,1fr))] gap-x-3 gap-y-2'>
+          <div className='grid grid-cols-[repeat(auto-fit,minmax(104px,1fr))] gap-x-3 gap-y-2'>
             {priceSummary}
           </div>
         </div>

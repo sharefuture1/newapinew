@@ -16,18 +16,33 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useEffect, useRef } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { LoadingState } from '@/components/loading-state'
 import { PublicLayout } from '@/components/layout'
 import { Footer } from '@/components/layout/components/footer'
-import { RichContent } from '@/components/rich-content'
 import { useTheme } from '@/context/theme-provider'
 import { isLikelyHtml } from '@/lib/content-format'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { CTA, Features, Hero, HowItWorks, Stats } from './components'
+import { Hero, HowItWorks } from './components'
 import { useHomePageContent } from './hooks'
+
+// Custom home content may be Markdown/HTML, which pulls in marked, dompurify
+// and KaTeX. Keep that weight out of the default landing-page chunk.
+const RichContent = lazy(() =>
+  import('@/components/rich-content').then((module) => ({
+    default: module.RichContent,
+  }))
+)
+
+// Pricing preview is below the fold and pulls the pricing data layer.
+const PricePreview = lazy(() =>
+  import('./components/sections/price-preview').then((module) => ({
+    default: module.PricePreview,
+  }))
+)
 
 export function Home() {
   const { i18n, t } = useTranslation()
@@ -62,7 +77,7 @@ export function Home() {
     return (
       <PublicLayout showMainContainer={false}>
         <main className='flex min-h-screen items-center justify-center'>
-          <div className='text-muted-foreground'>{t('Loading...')}</div>
+          <LoadingState message={t('Loading...')} />
         </main>
       </PublicLayout>
     )
@@ -97,12 +112,15 @@ export function Home() {
     if (contentIsHtml) {
       return (
         <PublicLayout showMainContainer={false}>
-          <RichContent
-            mode='html'
-            htmlVariant='isolated'
-            content={content}
-            className='custom-home-content'
-          />
+          <Suspense fallback={<LoadingState className='min-h-screen' />}>
+            <RichContent
+              mode='html'
+              htmlVariant='isolated'
+              content={content}
+              className='custom-home-content'
+            />
+          </Suspense>
+          <Footer />
         </PublicLayout>
       )
     }
@@ -110,23 +128,28 @@ export function Home() {
     return (
       <PublicLayout>
         <div className='mx-auto max-w-6xl px-4 py-8'>
-          <RichContent
-            mode='markdown'
-            content={content}
-            className='custom-home-content'
-          />
+          <Suspense fallback={<LoadingState />}>
+            <RichContent
+              mode='markdown'
+              content={content}
+              className='custom-home-content'
+            />
+          </Suspense>
         </div>
+        <Footer />
       </PublicLayout>
     )
   }
 
   return (
     <PublicLayout showMainContainer={false}>
-      <Hero isAuthenticated={isAuthenticated} />
-      <Stats />
-      <Features />
-      <HowItWorks />
-      <CTA isAuthenticated={isAuthenticated} />
+      <main>
+        <Hero isAuthenticated={isAuthenticated} />
+        <Suspense fallback={null}>
+          <PricePreview />
+        </Suspense>
+        <HowItWorks isAuthenticated={isAuthenticated} />
+      </main>
       <Footer />
     </PublicLayout>
   )

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
@@ -90,6 +91,12 @@ type WendingOAuthGrant struct {
 	UpdatedAt  int64  `json:"updated_at" gorm:"bigint"`
 	LastUsedAt int64  `json:"last_used_at" gorm:"bigint;default:0"` // last successful code exchange
 	RevokedAt  int64  `json:"revoked_at" gorm:"bigint;default:0;index"`
+	// DeviceId / DeviceName are set by native clients (desktop apps) that run on
+	// several machines: each device gets its own grant and key, so authorizing a
+	// second computer does not rotate (and break) the key of the first one.
+	// Empty for web clients (one grant per user + client, unchanged behaviour).
+	DeviceId   string `json:"device_id" gorm:"type:varchar(64);default:'';index"`
+	DeviceName string `json:"device_name" gorm:"type:varchar(64);default:''"`
 }
 
 func (WendingOAuthGrant) TableName() string { return "wending_oauth_grants" }
@@ -200,6 +207,55 @@ func (client *WendingOAuthClient) HasRedirectURI(uri string) bool {
 	return uri != "" && slices.Contains(client.GetRedirectURIs(), uri)
 }
 
+// MatchRedirectURI is HasRedirectURI plus the RFC 8252 §7.3 loopback rule for
+// public (native) clients: a registered http://127.0.0.1/<path> or
+// http://[::1]/<path> redirect URI matches the same URI on any port, because
+// desktop apps listen on an ephemeral port chosen at runtime. Scheme, IP
+// literal, path and query must still match exactly; "localhost" is not
+// port-flexible (RFC 8252 §8.3 recommends the IP literal).
+func (client *WendingOAuthClient) MatchRedirectURI(uri string) bool {
+	if client.HasRedirectURI(uri) {
+		return true
+	}
+	if !client.IsPublic || uri == "" {
+		return false
+	}
+	want, ok := wendingLoopbackKey(uri)
+	if !ok {
+		return false
+	}
+	for _, registered := range client.GetRedirectURIs() {
+		if got, ok := wendingLoopbackKey(registered); ok && got == want {
+			return true
+		}
+	}
+	return false
+}
+
+// wendingLoopbackKey returns the redirect URI without its port when it is an
+// http URI on a loopback IP literal.
+func wendingLoopbackKey(uri string) (string, bool) {
+	parsed, err := url.Parse(uri)
+	if err != nil || parsed.Scheme != "http" || parsed.User != nil || parsed.Fragment != "" {
+		return "", false
+	}
+	host := parsed.Hostname()
+	if host != "127.0.0.1" && host != "::1" {
+		return "", false
+	}
+	if port := parsed.Port(); port != "" {
+		n, err := strconv.Atoi(port)
+		if err != nil || n < 1 || n > 65535 {
+			return "", false
+		}
+	}
+	path := parsed.EscapedPath()
+	if path == "" {
+		path = "/"
+	}
+	return "http://" + host + path + "?" + parsed.RawQuery, true
+}
+
 func (client *WendingOAuthClient) VerifySecret(secret string) bool {
 	if secret == "" || client.ClientSecretHash == "" {
 		return false
@@ -298,8 +354,14 @@ func DeleteWendingOAuthClient(client *WendingOAuthClient) error {
 // ---------------------------------------------------------------------------
 
 func GetActiveWendingOAuthGrant(userId int, clientId string) (*WendingOAuthGrant, error) {
+	return GetActiveWendingOAuthDeviceGrant(userId, clientId, "")
+}
+
+// GetActiveWendingOAuthDeviceGrant returns the active grant of one device
+// (deviceId "" = web clients / clients that do not send a device id).
+func GetActiveWendingOAuthDeviceGrant(userId int, clientId string, deviceId string) (*WendingOAuthGrant, error) {
 	var grant WendingOAuthGrant
-	err := DB.Where("user_id = ? AND client_id = ? AND revoked_at = 0", userId, clientId).
+	err := DB.Where("user_id = ? AND client_id = ? AND device_id = ? AND revoked_at = 0", userId, clientId, deviceId).
 		Order("id desc").First(&grant).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -435,6 +497,9 @@ type WendingOAuthTokenSettings struct {
 	ModelLimitsEnabled bool
 	ModelLimits        string
 	Scope              string
+	// DeviceId / DeviceName: see WendingOAuthGrant. Validated by the controller.
+	DeviceId   string
+	DeviceName string
 }
 
 // IssueWendingOAuthGrant creates (or rotates) the user's grant for client and
@@ -443,12 +508,18 @@ type WendingOAuthTokenSettings struct {
 // NEW key and applies the newly chosen limits, so any previously issued key
 // for this app stops working.
 func IssueWendingOAuthGrant(userId int, client *WendingOAuthClient, settings WendingOAuthTokenSettings, maxTokens int) (*WendingOAuthGrant, bool, error) {
-	existing, err := GetActiveWendingOAuthGrant(userId, client.ClientId)
+	existing, err := GetActiveWendingOAuthDeviceGrant(userId, client.ClientId, settings.DeviceId)
 	if err != nil {
 		return nil, false, err
 	}
-	name := wendingOAuthTokenName(client.Name)
+	name := wendingOAuthTokenName(client.Name, settings.DeviceName)
 	now := common.GetTimestamp()
+	if existing != nil && existing.TokenId <= 0 {
+		// A sign-in-only grant (login/email scope) has no API key yet: attach a
+		// new key to it and keep the sign-in scopes, instead of looking up
+		// token 0 (which fails with "Token ID or user ID is empty").
+		return attachWendingOAuthKeyToGrant(existing, userId, name, now, settings, maxTokens)
+	}
 	if existing != nil {
 		token, err := GetTokenByIds(existing.TokenId, userId)
 		if err == nil {
@@ -473,11 +544,13 @@ func IssueWendingOAuthGrant(userId int, client *WendingOAuthClient, settings Wen
 			if err != nil {
 				return nil, false, err
 			}
+			// Keep sign-in scopes (login/email) that the grant already holds.
+			mergedScope := WendingOAuthMergeScopes(existing.Scope, settings.Scope)
 			if err := DB.Model(&WendingOAuthGrant{}).Where("id = ?", existing.Id).
-				Updates(map[string]any{"scope": settings.Scope, "updated_at": now}).Error; err != nil {
+				Updates(map[string]any{"scope": mergedScope, "updated_at": now, "device_name": settings.DeviceName}).Error; err != nil {
 				return nil, false, err
 			}
-			existing.Scope, existing.UpdatedAt = settings.Scope, now
+			existing.Scope, existing.UpdatedAt, existing.DeviceName = mergedScope, now, settings.DeviceName
 			return existing, true, nil
 		}
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
@@ -516,11 +589,13 @@ func IssueWendingOAuthGrant(userId int, client *WendingOAuthClient, settings Wen
 		AllowUserQuotaQuery: true,
 	}
 	grant := &WendingOAuthGrant{
-		UserId:    userId,
-		ClientId:  client.ClientId,
-		Scope:     settings.Scope,
-		CreatedAt: now,
-		UpdatedAt: now,
+		UserId:     userId,
+		ClientId:   client.ClientId,
+		Scope:      settings.Scope,
+		CreatedAt:  now,
+		UpdatedAt:  now,
+		DeviceId:   settings.DeviceId,
+		DeviceName: settings.DeviceName,
 	}
 	err = DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(token).Error; err != nil {
@@ -535,15 +610,70 @@ func IssueWendingOAuthGrant(userId int, client *WendingOAuthClient, settings Wen
 	return grant, false, nil
 }
 
-func wendingOAuthTokenName(appName string) string {
+// attachWendingOAuthKeyToGrant creates an API key for an existing grant that
+// has none (TokenId <= 0, e.g. a login-only grant) and merges the new scope
+// into the grant's scope.
+func attachWendingOAuthKeyToGrant(grant *WendingOAuthGrant, userId int, name string, now int64, settings WendingOAuthTokenSettings, maxTokens int) (*WendingOAuthGrant, bool, error) {
+	count, err := CountUserTokens(userId)
+	if err != nil {
+		return nil, false, err
+	}
+	if maxTokens > 0 && int(count) >= maxTokens {
+		return nil, false, common.NewMessage("Maximum number of tokens reached ({{max}})", map[string]any{"max": maxTokens})
+	}
+	key, err := common.GenerateKey()
+	if err != nil {
+		return nil, false, err
+	}
+	token := &Token{
+		UserId:              userId,
+		Name:                name,
+		Key:                 key,
+		Status:              common.TokenStatusEnabled,
+		CreatedTime:         now,
+		AccessedTime:        now,
+		ExpiredTime:         -1,
+		RemainQuota:         settings.RemainQuota,
+		UnlimitedQuota:      settings.UnlimitedQuota,
+		ModelLimitsEnabled:  settings.ModelLimitsEnabled,
+		ModelLimits:         settings.ModelLimits,
+		Group:               settings.Group,
+		AllowUserQuotaQuery: true,
+	}
+	scope := WendingOAuthMergeScopes(grant.Scope, settings.Scope)
+	err = DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(token).Error; err != nil {
+			return err
+		}
+		res := tx.Model(&WendingOAuthGrant{}).Where("id = ? AND token_id <= 0", grant.Id).
+			Updates(map[string]any{"token_id": token.Id, "scope": scope, "updated_at": now, "device_name": settings.DeviceName})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			return errors.New("oauth grant changed concurrently, please retry")
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, false, err
+	}
+	grant.TokenId, grant.Scope, grant.UpdatedAt, grant.DeviceName = token.Id, scope, now, settings.DeviceName
+	return grant, false, nil
+}
+
+func wendingOAuthTokenName(appName string, deviceName string) string {
 	name := []rune(WendingOAuthTokenNamePrefix + strings.TrimSpace(appName))
 	if len(name) > 30 { // tokens.name is limited to 50 bytes by the token API; keep it short
 		name = name[:30]
 	}
+	if device := strings.TrimSpace(deviceName); device != "" {
+		name = append(name, []rune(" · "+device)...)
+	}
 	for len(string(name)) > 50 {
 		name = name[:len(name)-1]
 	}
-	return string(name)
+	return strings.TrimSpace(string(name))
 }
 
 // ---------------------------------------------------------------------------

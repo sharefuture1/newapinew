@@ -28,6 +28,12 @@ import type { HomePageContentResult } from '../types'
 const STORAGE_KEY = 'home_page_content'
 
 /**
+ * The default landing page needs no API data. Stop blocking it when the
+ * custom-content endpoint is slow; late responses still replace the page.
+ */
+const CONTENT_LOAD_TIMEOUT_MS = 1500
+
+/**
  * Hook to load and manage custom home page content
  * Supports both Markdown/HTML content and iframe URLs
  */
@@ -38,13 +44,24 @@ export function useHomePageContent(): HomePageContentResult {
   useEffect(() => {
     let mounted = true
 
-    const loadContent = async () => {
-      // Load from localStorage first for immediate display
+    // Render cached content immediately instead of waiting for the API.
+    try {
       const cached = localStorage.getItem(STORAGE_KEY)
-      if (cached && mounted) {
+      if (cached) {
         setContent(cached)
+        setIsLoaded(true)
       }
+    } catch {
+      // Storage can be unavailable in privacy modes; fall back to the API.
+    }
 
+    const fallbackTimer = window.setTimeout(() => {
+      if (mounted) {
+        setIsLoaded(true)
+      }
+    }, CONTENT_LOAD_TIMEOUT_MS)
+
+    const loadContent = async () => {
       try {
         const response = await getHomePageContent()
         const { success, data } = response
@@ -64,6 +81,7 @@ export function useHomePageContent(): HomePageContentResult {
         handleServerError(error, i18next.t('Failed to load home page content'))
       } finally {
         if (mounted) {
+          window.clearTimeout(fallbackTimer)
           setIsLoaded(true)
         }
       }
@@ -73,6 +91,7 @@ export function useHomePageContent(): HomePageContentResult {
 
     return () => {
       mounted = false
+      window.clearTimeout(fallbackTimer)
     }
   }, [])
 

@@ -26,6 +26,7 @@ import {
 } from '@/context/theme-customization-provider'
 import { ThemeProvider, useTheme } from '@/context/theme-provider'
 import { initializeFrontendCache } from '@/lib/frontend-cache'
+import { useSystemConfigStore } from '@/stores/system-config-store'
 
 const savedPreferences = {
   'newapi:theme:v1:mode': 'dark',
@@ -94,14 +95,18 @@ function ThemeFixture() {
   )
 }
 
+const initialSystemConfig = useSystemConfigStore.getState().config
+
 beforeEach(() => {
   localStorage.clear()
+  useSystemConfigStore.setState({ config: initialSystemConfig })
 })
 
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
   localStorage.clear()
+  useSystemConfigStore.setState({ config: initialSystemConfig })
   for (const cookie of document.cookie.split(';')) {
     const name = cookie.trim().split('=')[0]
     document.cookie = `${name}=; path=/; max-age=0`
@@ -249,6 +254,57 @@ describe('theme preference persistence', () => {
       expect(localStorage.getItem(key)).toBe(value)
     }
     expect(localStorage.getItem('stale-ui-cache')).toBeNull()
+  })
+})
+
+describe('admin-forced appearance', () => {
+  function lockAppearance() {
+    useSystemConfigStore.setState((state) => ({
+      config: {
+        ...state.config,
+        allowUserTheme: false,
+        themeMode: 'dark',
+        themePreset: 'anthropic',
+      },
+    }))
+  }
+
+  it('applies the configured mode and preset to the document', () => {
+    lockAppearance()
+    render(<ThemeFixture />)
+
+    expect(screen.getByLabelText('Theme mode')).toHaveTextContent('dark')
+    expect(document.documentElement).toHaveClass('dark')
+    expect(document.body).toHaveAttribute('data-theme-preset', 'anthropic')
+  })
+
+  it('ignores user attempts to change the theme or preset', async () => {
+    lockAppearance()
+    const user = userEvent.setup()
+    render(<ThemeFixture />)
+
+    await user.click(screen.getByRole('button', { name: 'Customize' }))
+    await user.click(screen.getByRole('button', { name: 'Default preset' }))
+    await user.click(screen.getByRole('button', { name: 'Reset' }))
+
+    expect(screen.getByLabelText('Theme mode')).toHaveTextContent('dark')
+    expect(document.documentElement).toHaveClass('dark')
+    expect(document.body).toHaveAttribute('data-theme-preset', 'anthropic')
+    expect(localStorage.getItem('newapi:theme:v1:mode')).toBeNull()
+  })
+
+  it('keeps local preferences when users may choose the theme', () => {
+    localStorage.setItem('newapi:theme:v1:mode', 'light')
+    localStorage.setItem('newapi:theme:v1:preset', 'ocean-breeze')
+
+    render(<ThemeFixture />)
+
+    expect(screen.getByLabelText('Theme mode')).toHaveTextContent('light')
+    expect(document.documentElement).toHaveClass('light')
+    expect(document.body).toHaveAttribute(
+      'data-theme-preset',
+      'ocean-breeze'
+    )
   })
 })
 

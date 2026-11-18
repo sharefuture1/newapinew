@@ -571,8 +571,8 @@ describe('model cards', () => {
         tokenUnit='K'
       />
     )
-    expect(screen.getByText('$42 – $70').parentElement).toHaveTextContent(
-      '$42 – $70 / 1M token'
+    expect(screen.getByText('$0.042 – $0.07').parentElement).toHaveTextContent(
+      '$0.042 – $0.07 / 1K token'
     )
     expect(screen.getByText(/480p · 5s ≈/)).toBeVisible()
   })

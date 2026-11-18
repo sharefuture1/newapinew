@@ -691,8 +691,9 @@ it('opens the effective expression breakdown from the price without creating met
   const preview = await screen.findByRole('region', { name: 'Current Billing' })
   expect(preview).toHaveTextContent('standard')
   expect(preview).toHaveTextContent('long')
-  expect(preview).toHaveTextContent('0.3')
-  expect(preview).toHaveTextContent('0.6')
+  // Tier tables show token prices per 1K tokens (0.3 / 0.6 per 1M).
+  expect(preview).toHaveTextContent('0.000300')
+  expect(preview).toHaveTextContent('0.000600')
   expect(preview).toHaveTextContent('x-priority')
   expect(write).not.toHaveBeenCalled()
 })

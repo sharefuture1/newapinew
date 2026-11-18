@@ -30,6 +30,7 @@ import {
 import {
   STATUS_QUERY_KEY,
   ensureStatus,
+  mapStatusDataToConfig,
   statusQueryOptions,
 } from '@/lib/status-query'
 import { useSystemConfigStore } from '@/stores/system-config-store'
@@ -87,6 +88,28 @@ afterEach(() => {
   apiClient.get = originalGet
   window.localStorage.clear()
   useSystemConfigStore.setState(useSystemConfigStore.getInitialState(), true)
+})
+
+describe('appearance status mapping', () => {
+  test('maps the admin appearance fields into the system config', () => {
+    const config = mapStatusDataToConfig({
+      theme_mode: 'dark',
+      theme_preset: 'anthropic',
+      allow_user_theme: false,
+    })
+
+    expect(config.themeMode).toBe('dark')
+    expect(config.themePreset).toBe('anthropic')
+    expect(config.allowUserTheme).toBe(false)
+  })
+
+  test('keeps users in control when the server omits appearance fields', () => {
+    const config = mapStatusDataToConfig({})
+
+    expect(config.themeMode).toBe('system')
+    expect(config.themePreset).toBe('default')
+    expect(config.allowUserTheme).toBe(true)
+  })
 })
 
 describe('shared status query deduplication', () => {

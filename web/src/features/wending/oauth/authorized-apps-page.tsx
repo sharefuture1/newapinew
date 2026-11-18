@@ -69,6 +69,9 @@ export function GrantList({
             <div className='min-w-0 flex-1 space-y-1'>
               <div className='flex flex-wrap items-center gap-2 font-medium'>
                 {grant.client_name || grant.client_id}
+                {grant.device_name ? (
+                  <Badge variant='secondary'>{grant.device_name}</Badge>
+                ) : null}
                 {showUser ? (
                   <Badge variant='outline'>
                     {t('wending.clients.grantsUser', { id: grant.user_id })}

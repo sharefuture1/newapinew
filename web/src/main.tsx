@@ -78,10 +78,32 @@ if (!rootElement) {
       ) as HTMLMetaElement | null
       if (metaTitle) metaTitle.setAttribute('content', name)
     }
+    // Apply an admin-forced theme before React mounts so the first paint does
+    // not flash the visitor's local preference.
+    const applyForcedAppearance = (status: Record<string, unknown>) => {
+      if (status.allow_user_theme !== false) return
+      const root = document.documentElement
+      const mode = status.theme_mode
+      const prefersDark = window.matchMedia(
+        '(prefers-color-scheme: dark)'
+      ).matches
+      const dark = mode === 'dark' || (mode !== 'light' && prefersDark)
+      root.classList.remove('light', 'dark')
+      root.classList.add(dark ? 'dark' : 'light')
+
+      const preset = status.theme_preset
+      if (typeof preset === 'string' && preset && preset !== 'default') {
+        document.body?.setAttribute('data-theme-preset', preset)
+      } else {
+        document.body?.removeAttribute('data-theme-preset')
+      }
+    }
+
     // Cache-first
     const cached = readCachedStatus()
     if (cached?.system_name) apply(cached.system_name as string)
     if (cached?.logo) applyFaviconToDom(cached.logo as string)
+    if (cached) applyForcedAppearance(cached)
 
     // Background refresh through the shared cache. This primes ['status']
     // before React mounts, so the root guard and every status consumer reuse
@@ -92,6 +114,7 @@ if (!rootElement) {
       .then((s) => {
         if (s?.system_name) apply(s.system_name as string)
         if (s?.logo) applyFaviconToDom(s.logo as string)
+        if (s) applyForcedAppearance(s)
       })
       .catch(() => {
         /* empty */
