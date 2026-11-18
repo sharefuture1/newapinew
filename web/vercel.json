@@ -1,0 +1,46 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bun run build",
+  "installCommand": "bun install --frozen-lockfile",
+  "outputDirectory": "dist",
+  "framework": null,
+  "routes": [
+    {
+      "src": "^/(api|pg|v1|mj)(/.*)?$",
+      "dest": "https://api.wending.ai/$1$2",
+      "headers": {
+        "x-vercel-enable-rewrite-caching": "0"
+      },
+      "transforms": [
+        {
+          "type": "request.headers",
+          "op": "set",
+          "target": {
+            "key": "x-wending-edge"
+          },
+          "args": "$WENDING_EDGE_SECRET",
+          "env": [
+            "WENDING_EDGE_SECRET"
+          ]
+        }
+      ]
+    },
+    {
+      "src": "^/static/(.*)$",
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "continue": true
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html",
+      "headers": {
+        "cache-control": "no-cache"
+      }
+    }
+  ]
+}
