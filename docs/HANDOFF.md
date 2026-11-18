@@ -1,13 +1,47 @@
 # HANDOFF – 问鼎AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-18 14:40 EST – `wending` = merge cf0d5b4ff (PR #2); branch `wending-ui` (PR #3) for UI/branding. go.wending.ai on Vercel. Backend binary NOT redeployed._
+_Last updated: 2026-11-18 15:15 EST – production = `wending` 2fb5dac (PR #3 merged) on api.wending.ai and go.wending.ai; SESSION_COOKIE_TRUSTED_URL + Caddy edge config live; edge secret rotated._
+
+## Production deployment record — 2026-11-18 20:00 UTC (2fb5dac: PR #2 + PR #3)
+
+- PR #3 (`wending-ui`) merged into `wending` as **2fb5dac** (sharefuture1). Tree identical to the tested
+  `wending-ui` head 054e88333.
+- Binary `v1.0.0-rc.45-wending-2fb5dac`, sha256 `e1800a48a4160d170471f1a4df65b9710c62f1a1aad4c923e6ebef7a907ebc99`
+  (CGO_ENABLED=0, `-s -w`, go1.27.3, web built with `bun run build`). Checks: `go vet`, `go test ./controller
+  ./model ./middleware ./router ./service ./common`, web 204 files / 2383 tests, `tsgo -b`, build.
+- Backups (TS 20261118-195912, UTC): `/opt/new-api/db-backup-20261118-195912-pre-2fb5dac.dump` (pg_dump -Fc,
+  600), `/opt/new-api/new-api.bak-20261118-195912` (= 44e03dc, sha256 eb0c1395…), `/opt/new-api/env.conf.bak-20261118-195912`,
+  `/etc/caddy/Caddyfile.bak-20261118-195912`, `/etc/caddy/wending-edge.caddy.bak-20261118-195912` (old secret),
+  `/etc/caddy/Caddyfile.go-staged.bak-20261118-195912`. Old edge secret also kept on the ops box
+  (`/workspace/.secrets/*.old-20261118`).
+- env.conf: `SESSION_COOKIE_TRUSTED_URL=https://api.wending.ai,https://go.wending.ai` (was api only).
+- new-api restart → `/api/status` 200 after **3.4 s**. AutoMigrate added `wending_oauth_grants.device_id` /
+  `device_name` (varchar). Journal: no migration errors.
+- Caddy: staged edge config applied (`Caddyfile` = `Caddyfile.go-staged`), `X-Wending-Edge` secret rotated in
+  `/etc/caddy/wending-edge.caddy` (root:caddy 0640) and in Vercel env `WENDING_EDGE_SECRET` (prod+preview).
+  `caddy validate` OK; restart → 200 after **4.8 s**. The header is now stripped before request-capture (52029).
+- go.wending.ai production: **dpl_9YMu3WZUJsJWzn2H3mcrMqfynNhZ** (`wending` 2fb5dac, READY, new edge secret);
+  previous dpl_FgwV7kZ8tm7uogFscXCH2Fdssx8b. Via go.wending.ai new-api logs the real visitor IP; forged
+  `X-Real-IP` / wrong `X-Wending-Edge` sent directly to api.wending.ai is ignored (logs the TCP peer).
+- Verified: version; `/` 200 (new WendingAI title); `/v1/models` 401; `/oauth/authorize` 200; bogus token → 401
+  invalid_client; userinfo bogus → 401; real secrets (huabu, lrs, shop, casino/21, laotalk) + fake code → 400
+  invalid_grant; huabu/lrs/21/laos `/api/auth/wending/start` → 302 → authorize 200; refresh with
+  `Origin: https://go.wending.ai` (direct and via go.wending.ai) → 401 AUTH_UNAUTHORIZED (no longer 403), foreign
+  origin → 403; webhooks reachable: waffo-pancake 401 invalid signature, epay notify "fail", legacy waffo 403
+  (disabled, unchanged).
+- Pre-existing, unrelated: `mcpwd1.wending.ai` → 502 (nothing listens on 127.0.0.1:3087 since ~2026-09).
+- **Rollback:**
+  `install -m 0755 /opt/new-api/new-api.bak-20261118-195912 /opt/new-api/new-api && cp -a /opt/new-api/env.conf.bak-20261118-195912 /opt/new-api/env.conf && systemctl restart new-api`
+  (extra columns are ignored by the old binary);
+  Caddy: `cp -a /etc/caddy/Caddyfile.bak-20261118-195912 /etc/caddy/Caddyfile && systemctl restart caddy`;
+  go.wending.ai: promote dpl_FgwV7kZ8tm7uogFscXCH2Fdssx8b (needs the old secret only if the edge Caddyfile stays).
+  DB restore only if really needed: `pg_restore --clean -d "$SQL_DSN" db-backup-20261118-195912-pre-2fb5dac.dump`.
 
 ## 2026-11-18 (afternoon): PR #2 merged, Vercel Git, `wending-ui`
 
-- **PR #2 merged** into `wending` as **cf0d5b4ff** (sharefuture1). Backend not deployed, new-api and
-  Caddy not restarted. api.wending.ai still serves the embedded frontend of 44e03dc – the embedded UI
-  only changes when the backend binary is redeployed.
-- **go.wending.ai production** = dpl_FgwV7kZ8tm7uogFscXCH2Fdssx8b (`wending` cf0d5b4ff).
+- **PR #2 merged** into `wending` as **cf0d5b4ff** (sharefuture1). (Deployed later with PR #3 as 2fb5dac.)
+  Note: the embedded UI on api.wending.ai only changes when the backend binary is redeployed.
+- go.wending.ai production at that time = dpl_FgwV7kZ8tm7uogFscXCH2Fdssx8b (`wending` cf0d5b4ff); superseded by dpl_9YMu3WZUJsJWzn2H3mcrMqfynNhZ.
 - **Vercel Git (project `wending-go`)**: the API/MCP cannot connect a repo to an existing project or
   set the production branch. Already set via API: Ignored Build Step
   `if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 0; fi; git diff --quiet HEAD^ HEAD -- .`
@@ -84,7 +118,7 @@ Checks: `go build`, `go vet ./controller ./model ./router`, `go test ./controlle
   fallback. `/dashboard` is a SPA route and is not proxied.
 - DNS (Cloudflare zone wending.ai): `go.wending.ai CNAME cname.vercel-dns.com`, DNS-only
   (record id 422ad44c08802e8ba35353fa80c9dcdd). Overrides the proxied `*.wending.ai` wildcard.
-- **Backend pending (needs a restart, not done):**
+- **Backend items below were applied on 2026-11-18 20:00 UTC (see the deployment record above):**
   1. `SESSION_COOKIE_TRUSTED_URL=https://api.wending.ai,https://go.wending.ai` in
      `/opt/new-api/env.conf`. It is read from env once at startup (`common.InitSessionCookieSettings`),
      not from DB options. Until then `POST /api/user/auth/refresh|logout` from go.wending.ai return
