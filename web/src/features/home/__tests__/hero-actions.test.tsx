@@ -44,7 +44,14 @@ async function renderHero(isAuthenticated: boolean) {
       path: '/',
       component: () => <Hero isAuthenticated={isAuthenticated} />,
     }),
-    ...['/sign-up', '/sign-in', '/pricing', '/keys', '/dashboard'].map((path) =>
+    ...[
+      '/sign-up',
+      '/sign-in',
+      '/pricing',
+      '/keys',
+      '/dashboard',
+      '/wallet',
+    ].map((path) =>
       createRoute({
         getParentRoute: () => root,
         path,
@@ -71,7 +78,7 @@ describe('landing hero actions', () => {
       'WendingAI'
     )
     useSystemConfigStore.setState((state) => ({
-      config: { ...state.config, systemName: 'New API' },
+      config: { ...state.config, systemName: 'WendingAI' },
     }))
   })
 
@@ -81,9 +88,10 @@ describe('landing hero actions', () => {
     expect(
       screen.getByRole('button', { name: 'Create API Key' })
     ).toHaveAttribute('href', '/sign-up')
-    expect(
-      screen.getByRole('button', { name: 'View Pricing' })
-    ).toHaveAttribute('href', '/pricing')
+    expect(screen.getByRole('link', { name: 'View Pricing' })).toHaveAttribute(
+      'href',
+      '/pricing'
+    )
   })
 
   it('sends signed-in users to key creation', async () => {
@@ -92,17 +100,36 @@ describe('landing hero actions', () => {
     expect(
       screen.getByRole('button', { name: 'Create API Key' })
     ).toHaveAttribute('href', '/keys')
+    expect(screen.getByRole('link', { name: 'View Pricing' })).toHaveAttribute(
+      'href',
+      '/pricing'
+    )
+  })
+
+  it('links to wallet top-up and the WendingAI Shop', async () => {
+    await renderHero(false)
+
     expect(
-      screen.getByRole('button', { name: 'View Pricing' })
-    ).toHaveAttribute('href', '/pricing')
+      screen.getByRole('button', { name: 'Wallet Top-up' })
+    ).toHaveAttribute('href', '/wallet')
+    const shop = screen.getByRole('button', { name: 'WendingAI Shop' })
+    expect(shop).toHaveAttribute('href', 'https://shop.wending.ai/')
+    expect(shop).toHaveAttribute('target', '_blank')
+  })
+
+  it('does not link to third-party desktop clients', async () => {
+    await renderHero(false)
+
+    expect(screen.queryByText(/Cherry Studio/i)).toBeNull()
+    expect(screen.queryByText(/CC Switch/i)).toBeNull()
+    expect(document.querySelector('a[href*="cherry-ai.com"]')).toBeNull()
+    expect(document.querySelector('a[href*="ccswitch.io"]')).toBeNull()
   })
 
   it('advertises the configured base URL and primary endpoint', async () => {
     await renderHero(false)
 
-    expect(
-      screen.getByText('https://gateway.example.com/v1')
-    ).toBeVisible()
+    expect(screen.getByText('https://gateway.example.com/v1')).toBeVisible()
     expect(screen.getByText('/chat/completions')).toBeVisible()
     expect(screen.getByText('POST')).toBeVisible()
   })

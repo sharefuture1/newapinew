@@ -1,6 +1,44 @@
 # HANDOFF – 问鼎AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-18 01:40 EST – branch `wending-integration`, go.wending.ai on Vercel. Backend binary NOT redeployed._
+_Last updated: 2026-11-18 14:40 EST – `wending` = merge cf0d5b4ff (PR #2); branch `wending-ui` (PR #3) for UI/branding. go.wending.ai on Vercel. Backend binary NOT redeployed._
+
+## 2026-11-18 (afternoon): PR #2 merged, Vercel Git, `wending-ui`
+
+- **PR #2 merged** into `wending` as **cf0d5b4ff** (sharefuture1). Backend not deployed, new-api and
+  Caddy not restarted. api.wending.ai still serves the embedded frontend of 44e03dc – the embedded UI
+  only changes when the backend binary is redeployed.
+- **go.wending.ai production** = dpl_FgwV7kZ8tm7uogFscXCH2Fdssx8b (`wending` cf0d5b4ff).
+- **Vercel Git (project `wending-go`)**: the API/MCP cannot connect a repo to an existing project or
+  set the production branch. Already set via API: Ignored Build Step
+  `if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 0; fi; git diff --quiet HEAD^ HEAD -- .`
+  (root is `web/`, so `.` = web/; `main` never builds). **Still manual (dashboard):** Settings → Git →
+  Connect `sharefuture1/newapinew`; Settings → Environments → Production → Branch Tracking = `wending`;
+  Root Directory stays `web`. Until then deploy with `create_deployment` + `gitSource`
+  (`ref`/`sha`), no `target` for previews, `target: production` only for `wending`.
+- **Branch `wending-ui`** (PR #3 → `wending`), frontend only:
+  - Cherry Studio / CC Switch removed (home connection panel, key row action + `cc-switch-dialog`,
+    pricing mock app list). Chat presets stay data-driven (production `Chats=[]`).
+  - Footer GitHub/New API credit removed; footer gets an "About" link.
+  - **License:** upstream NOTICE (AGPLv3 §7(b)) requires the text
+    "Frontend design and development by New API contributors." and a visible link to
+    https://github.com/QuantumNous/new-api in a prominent about/legal/footer location. Both are kept in
+    an "开源声明" block at the bottom of **every** About variant (markdown/html/url/empty), plus the
+    modified source link https://github.com/sharefuture1/newapinew (AGPLv3 §13 – the repo must stay
+    public, or another source offer is needed). Changed files carry "Modified by WendingAI (2026-11)"
+    comments (§7(c)). Do not remove the About notice; tests `open-source-notice.test.tsx` and
+    `footer.test.tsx` guard it.
+  - Homepage: hero buttons **钱包充值** (`/wallet`, router guard sends anonymous users to sign-in and
+    back) and **WendingAI 商城** (https://shop.wending.ai/, new tab), plus a "快捷入口" card section.
+    Wallet page: WendingAI Shop card. Constants in `web/src/lib/wending-brand.ts`.
+  - Branding: vector mark (`public/wendingai-mark.svg`, traced from the R2 logo), `favicon.svg/.ico`,
+    `apple-touch-icon.png`, `icon-192/512.png`, `og-image.jpg`, zh/en SEO + OG/Twitter meta in
+    `index.html`, default system name WendingAI. Auth pages: branded split layout on desktop.
+    The DB options `Logo` (R2 jpg) and `SystemName` still override header logo/favicon/title at runtime.
+  - Compliance: zh copy says "兼容主流接口协议" instead of naming a vendor; dashboard sample-curl fallback
+    model `deepseek-chat` (real first model is used when available). Error page "联系客服" → t.me/wendingai.
+  - Checks: `bun run test` 204 files / 2383 tests, `tsgo -b`, `bun run build` pass.
+  - Screenshots (local instance with prod-like options): `/workspace/newapi-shots/{before,after}/`
+    on the ops box, desktop 1440 + mobile 390, light + dark.
 
 ## 2026-11-18: `wending-integration` + go.wending.ai (Vercel)
 

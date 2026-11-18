@@ -7346,6 +7346,21 @@
     "Generate an API key in the console.": "Generate an API key in the console.",
     "Connect your app": "Connect your app",
     "Fill in the base URL, key and model name.": "Fill in the base URL, key and model name.",
-    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console."
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.",
+    "OpenAI-compatible": "OpenAI-compatible",
+    "Stable & fast": "Stable & fast",
+    "Pay as you go": "Pay as you go",
+    "Enterprise AI API Gateway": "Enterprise AI API Gateway",
+    "Wallet Top-up": "Wallet Top-up",
+    "WendingAI Shop": "WendingAI Shop",
+    "Quick access": "Quick access",
+    "Top up your balance instantly and pay only for what you use.": "Top up your balance instantly and pay only for what you use.",
+    "Go to wallet": "Go to wallet",
+    "Plans, credits and AI services in one store.": "Plans, credits and AI services in one store.",
+    "Visit shop": "Visit shop",
+    "Contact support": "Contact support",
+    "Open-source notice": "Open-source notice",
+    "Original project": "Original project",
+    "This service runs a modified version. Source code": "This service runs a modified version. Source code"
   }
 }

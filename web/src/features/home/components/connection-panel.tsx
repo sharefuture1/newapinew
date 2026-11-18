@@ -16,6 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+// Modified by WendingAI (2026-11): removed third-party client links (AGPLv3
+// §7(c) change marking).
+import { Link } from '@tanstack/react-router'
+import { Boxes, KeyRound } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -56,7 +60,7 @@ export function ConnectionPanel(props: ConnectionPanelProps) {
   return (
     <div
       className={cn(
-        'bg-muted/40 grid overflow-hidden border md:grid-cols-2',
+        'bg-card/60 grid overflow-hidden rounded-2xl border backdrop-blur md:grid-cols-2',
         props.className
       )}
     >
@@ -105,24 +109,26 @@ export function ConnectionPanel(props: ConnectionPanelProps) {
           <Button
             variant='secondary'
             size='sm'
-            className='h-9 rounded-none px-4'
-            render={<a href='https://cherry-ai.com' target='_blank' rel='noopener noreferrer' />}
+            className='h-9 px-4'
+            render={<Link to='/keys' />}
           >
-            Cherry Studio
+            <KeyRound className='size-4' aria-hidden='true' />
+            {t('API Keys')}
           </Button>
           <Button
             variant='secondary'
             size='sm'
-            className='h-9 rounded-none px-4'
-            render={<a href='https://ccswitch.io' target='_blank' rel='noopener noreferrer' />}
+            className='h-9 px-4'
+            render={<Link to='/pricing' />}
           >
-            CC Switch
+            <Boxes className='size-4' aria-hidden='true' />
+            {t('Model Square')}
           </Button>
           {docsUrl && (
             <Button
               variant='outline'
               size='sm'
-              className='h-9 rounded-none px-4'
+              className='h-9 px-4'
               render={
                 <a href={docsUrl} target='_blank' rel='noopener noreferrer' />
               }

@@ -26,7 +26,7 @@ import { useTheme } from '@/context/theme-provider'
 import { isLikelyHtml } from '@/lib/content-format'
 import { useAuthStore } from '@/stores/auth-store'
 
-import { Hero, HowItWorks } from './components'
+import { Hero, HowItWorks, QuickAccess } from './components'
 import { useHomePageContent } from './hooks'
 
 // Custom home content may be Markdown/HTML, which pulls in marked, dompurify
@@ -145,6 +145,7 @@ export function Home() {
     <PublicLayout showMainContainer={false}>
       <main>
         <Hero isAuthenticated={isAuthenticated} />
+        <QuickAccess />
         <Suspense fallback={null}>
           <PricePreview />
         </Suspense>

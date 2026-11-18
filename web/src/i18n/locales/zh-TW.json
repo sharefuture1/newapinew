@@ -7346,6 +7346,21 @@
     "Generate an API key in the console.": "在主控台建立 API Key。",
     "Connect your app": "接入應用",
     "Fill in the base URL, key and model name.": "填入位址、金鑰與模型名稱。",
-    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "任何相容 OpenAI 的用戶端都可以使用：填入上方位址與主控台建立的 API Key 即可。"
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "任何相容 OpenAI 的用戶端都可以使用：填入上方位址與主控台建立的 API Key 即可。",
+    "OpenAI-compatible": "相容主流介面協定",
+    "Stable & fast": "穩定高速",
+    "Pay as you go": "按量計費",
+    "Enterprise AI API Gateway": "企業級 AI 大模型 API 平台",
+    "Wallet Top-up": "錢包儲值",
+    "WendingAI Shop": "WendingAI 商城",
+    "Quick access": "快捷入口",
+    "Top up your balance instantly and pay only for what you use.": "餘額即充即用，按實際用量計費。",
+    "Go to wallet": "前往錢包",
+    "Plans, credits and AI services in one store.": "方案、額度與智慧服務，一站購齊。",
+    "Visit shop": "進入商城",
+    "Contact support": "聯絡客服",
+    "Open-source notice": "開源聲明",
+    "Original project": "原專案",
+    "This service runs a modified version. Source code": "本服務運行的是修改版本，原始碼"
   }
 }

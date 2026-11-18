@@ -22,8 +22,10 @@ import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { WENDING_SUPPORT_URL } from '@/lib/wending-brand'
 
-const FEEDBACK_URL = 'https://github.com/QuantumNous/new-api/issues'
+// Modified by WendingAI (2026-11): point feedback at WendingAI support.
+const FEEDBACK_URL = WENDING_SUPPORT_URL
 
 type GeneralErrorProps = React.HTMLAttributes<HTMLDivElement> & {
   minimal?: boolean
@@ -107,7 +109,7 @@ export function GeneralError({
                 />
               }
             >
-              {t('Report an issue')}
+              {t('Contact support')}
             </Button>
             <Button onClick={() => navigate({ to: '/' })}>
               {t('Back to Home')}
