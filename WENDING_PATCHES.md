@@ -60,3 +60,26 @@ and `web/src/hooks/use-sidebar-data.ts`, plus locale JSON when merging tag rc.51
 | Per-1K public pricing, advantage bar | `web/src/features/pricing/**` (`DEFAULT_TOKEN_UNIT = 'K'`; raw task-expression prices in logs/admin editors keep the 1M label) |
 | Editorial landing page | `web/src/features/home/**` (old sections removed); price preview only fetches `/api/pricing` when pricing is visible to the visitor |
 | Standalone frontend on Vercel | `web/vercel.json` (fork-only) – see docs/HANDOFF.md § go.wending.ai |
+
+## Branch `wending-ui` (2026-11-18): WendingAI branding / UI (frontend only)
+
+New files: `web/src/lib/wending-brand.ts`, `web/src/features/home/components/sections/quick-access.tsx`,
+`web/src/features/wallet/components/shop-cta.tsx`, brand assets in `web/public/`
+(`favicon.svg`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `og-image.jpg`,
+`wendingai-mark.svg`; `favicon.ico` and `logo.png` replaced), tests
+`features/about/__tests__/open-source-notice.test.tsx`, `components/layout/components/__tests__/footer.test.tsx`.
+
+| Upstream file | Change |
+|---|---|
+| `web/index.html` | WendingAI title, zh/en description, OG/Twitter meta, svg/touch icons, `lang=zh-CN` |
+| `web/src/components/layout/components/footer.tsx` | removed New API/GitHub credit (`ProjectAttribution`); About link |
+| `web/src/features/about/index.tsx` | AGPLv3 §7(b) open-source notice on every variant; empty state without upstream links |
+| `web/src/features/home/**` | hero CTAs (wallet top-up, shop), quick-access section, connection panel without Cherry Studio / CC Switch |
+| `web/src/features/keys/**` | CC Switch row action, dialog and dialog type removed |
+| `web/src/features/pricing/lib/mock-stats.ts` | Cherry Studio removed from mock app list |
+| `web/src/features/auth/auth-layout.tsx` | branded split layout |
+| `web/src/features/wallet/index.tsx` | WendingAI Shop card |
+| `web/src/features/errors/general-error.tsx` | feedback link → WendingAI support |
+| `web/src/features/dashboard/components/overview/overview-dashboard.tsx` | sample model fallback `deepseek-chat` |
+| `web/src/lib/constants.ts`, `system-brand.tsx`, `assets/logo.tsx` | default name WendingAI |
+| `web/src/i18n/locales/*.json` | new keys; zh/zh-TW vendor-neutral wording |
