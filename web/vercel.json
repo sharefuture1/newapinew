@@ -36,6 +36,13 @@
       "handle": "filesystem"
     },
     {
+      "src": "^/static/.*$",
+      "status": 404,
+      "headers": {
+        "cache-control": "no-store"
+      }
+    },
+    {
       "src": "/(.*)",
       "dest": "/index.html",
       "headers": {

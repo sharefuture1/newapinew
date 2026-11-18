@@ -22,7 +22,10 @@ import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { GroupMultiplierBadge } from '@/components/group-badge'
+import { useStatus } from '@/hooks/use-status'
 import { formatBillingCurrencyFromUSD } from '@/lib/currency'
+import { parseHeaderNavModulesFromStatus } from '@/lib/nav-modules'
+import { useAuthStore } from '@/stores/auth-store'
 import { useSystemConfigStore } from '@/stores/system-config-store'
 
 import { TOKEN_UNIT_DIVISORS } from '@/features/pricing/constants'
@@ -34,7 +37,19 @@ const PREVIEW_MODEL_COUNT = 4
 
 export function PricePreview() {
   const { t } = useTranslation()
-  const { models, isLoading } = usePricingData()
+  const { status } = useStatus()
+  const isAuthed = useAuthStore((state) => !!state.auth.user)
+  // Only fetch /api/pricing when visitors may see it: a 401 from a
+  // login-only pricing page would bounce anonymous visitors to /sign-in.
+  const pricing = parseHeaderNavModulesFromStatus(
+    status as Record<string, unknown> | null
+  )?.pricing
+  const canSeePricing =
+    !!pricing &&
+    typeof pricing === 'object' &&
+    pricing.enabled &&
+    (!pricing.requireAuth || isAuthed)
+  const { models, isLoading } = usePricingData(canSeePricing)
   const currency = useSystemConfigStore((state) => state.config.currency)
 
   const cheapest = useMemo(
@@ -54,7 +69,7 @@ export function PricePreview() {
     [models, currency]
   )
 
-  if (isLoading || cheapest.length === 0) {
+  if (!canSeePricing || isLoading || cheapest.length === 0) {
     return null
   }
 
