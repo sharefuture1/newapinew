@@ -25,12 +25,65 @@ import { RichContent } from '@/components/rich-content'
 import { Skeleton } from '@/components/ui/skeleton'
 import { isHttpUrl, isLikelyHtml } from '@/lib/content-format'
 import { requireServerSuccess } from '@/lib/server-error-message'
+import {
+  MODIFIED_SOURCE_URL,
+  UPSTREAM_ATTRIBUTION_TEXT,
+  UPSTREAM_PROJECT_URL,
+} from '@/lib/wending-brand'
 
 import { getAboutContent } from './api'
 
+// Modified by WendingAI (2026-11): the upstream attribution required by the
+// New API NOTICE (AGPLv3 §7(b)) is shown here on every About variant instead
+// of in the site footer.
+function OpenSourceNotice() {
+  const { t } = useTranslation()
+  return (
+    <section
+      aria-label={t('Open-source notice')}
+      className='border-border/60 text-muted-foreground mx-auto w-full max-w-4xl border-t px-4 py-6 text-xs leading-relaxed'
+    >
+      <p className='text-foreground/80 mb-1 font-medium'>
+        {t('Open-source notice')}
+      </p>
+      <p>{UPSTREAM_ATTRIBUTION_TEXT}</p>
+      <p>
+        {t('Original project')}:{' '}
+        <a
+          href={UPSTREAM_PROJECT_URL}
+          target='_blank'
+          rel='noopener noreferrer'
+          className='text-primary hover:underline'
+        >
+          {UPSTREAM_PROJECT_URL}
+        </a>{' '}
+        · {t('License')}:{' '}
+        <a
+          href={`${UPSTREAM_PROJECT_URL}/blob/main/LICENSE`}
+          target='_blank'
+          rel='noopener noreferrer'
+          className='text-primary hover:underline'
+        >
+          AGPL-3.0
+        </a>
+      </p>
+      <p>
+        {t('This service runs a modified version. Source code')}:{' '}
+        <a
+          href={MODIFIED_SOURCE_URL}
+          target='_blank'
+          rel='noopener noreferrer'
+          className='text-primary hover:underline'
+        >
+          {MODIFIED_SOURCE_URL}
+        </a>
+      </p>
+    </section>
+  )
+}
+
 function EmptyAboutState() {
   const { t } = useTranslation()
-  const currentYear = new Date().getFullYear()
 
   return (
     <div className='flex min-h-[60vh] items-center justify-center p-8'>
@@ -44,68 +97,6 @@ function EmptyAboutState() {
             {t(
               'The administrator has not configured any about content yet. You can set it in the settings page, supporting HTML or URL.'
             )}
-          </p>
-        </div>
-        <div className='space-y-4 text-sm'>
-          <p>
-            {t('New API Project Repository:')}{' '}
-            <a
-              href='https://github.com/QuantumNous/new-api'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('https://github.com/QuantumNous/new-api')}
-            </a>
-          </p>
-          <p className='text-muted-foreground'>
-            <a
-              href='https://github.com/QuantumNous/new-api'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('NewAPI')}
-            </a>{' '}
-            © {currentYear}{' '}
-            <a
-              href='https://github.com/QuantumNous'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('QuantumNous')}
-            </a>{' '}
-            {t('| Based on')}{' '}
-            <a
-              href='https://github.com/songquanpeng/one-api'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('One API')}
-            </a>{' '}
-            © 2023{' '}
-            <a
-              href='https://github.com/songquanpeng'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('JustSong')}
-            </a>
-          </p>
-          <p className='text-muted-foreground'>
-            {t('This project must be used in compliance with the')}{' '}
-            <a
-              href='https://github.com/QuantumNous/new-api/blob/main/LICENSE'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-primary hover:underline'
-            >
-              {t('AGPL v3.0 License')}
-            </a>
-            .
           </p>
         </div>
       </div>
@@ -142,6 +133,7 @@ export function About() {
     return (
       <PublicLayout>
         <EmptyAboutState />
+        <OpenSourceNotice />
       </PublicLayout>
     )
   }
@@ -155,6 +147,7 @@ export function About() {
           title={t('About')}
           sandbox='allow-forms allow-popups allow-popups-to-escape-sandbox allow-scripts'
         />
+        <OpenSourceNotice />
       </PublicLayout>
     )
   }
@@ -168,6 +161,7 @@ export function About() {
           content={rawContent}
           className='prose-neutral dark:prose-invert max-w-none'
         />
+        <OpenSourceNotice />
       </PublicLayout>
     )
   }
@@ -181,6 +175,7 @@ export function About() {
           className='prose-neutral dark:prose-invert max-w-none'
         />
       </div>
+      <OpenSourceNotice />
     </PublicLayout>
   )
 }

@@ -7346,6 +7346,21 @@
     "Generate an API key in the console.": "コンソールで API キーを作成します。",
     "Connect your app": "アプリを接続",
     "Fill in the base URL, key and model name.": "ベース URL、キー、モデル名を入力します。",
-    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "OpenAI 互換のクライアントならどれでも使えます。上のベース URL とコンソールで作成した API キーを入力してください。"
+    "Any OpenAI-compatible client works: fill in the base URL above with an API key from the console.": "OpenAI 互換のクライアントならどれでも使えます。上のベース URL とコンソールで作成した API キーを入力してください。",
+    "OpenAI-compatible": "OpenAI-compatible",
+    "Stable & fast": "Stable & fast",
+    "Pay as you go": "Pay as you go",
+    "Enterprise AI API Gateway": "Enterprise AI API Gateway",
+    "Wallet Top-up": "Wallet Top-up",
+    "WendingAI Shop": "WendingAI Shop",
+    "Quick access": "Quick access",
+    "Top up your balance instantly and pay only for what you use.": "Top up your balance instantly and pay only for what you use.",
+    "Go to wallet": "Go to wallet",
+    "Plans, credits and AI services in one store.": "Plans, credits and AI services in one store.",
+    "Visit shop": "Visit shop",
+    "Contact support": "Contact support",
+    "Open-source notice": "Open-source notice",
+    "Original project": "Original project",
+    "This service runs a modified version. Source code": "This service runs a modified version. Source code"
   }
 }

@@ -155,12 +155,6 @@ const APP_TEMPLATES: Array<
     url: 'https://github.com/stitionai/devika',
   },
   {
-    name: 'Cherry Studio',
-    description: 'Multi-model desktop chat client',
-    category: 'Chat',
-    url: 'https://cherry-ai.com',
-  },
-  {
     name: 'AnythingLLM',
     description: 'Workspaces around your private documents',
     category: 'Platform',
