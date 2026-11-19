@@ -21,7 +21,6 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 
-import { removeBootShell } from '@/lib/boot-shell'
 import { installBuildMetadata } from '@/lib/build-metadata'
 import { applyFaviconToDom } from '@/lib/dom-utils'
 import '@/lib/dayjs'
@@ -146,9 +145,3 @@ if (!rootElement.innerHTML) {
   void i18nReady.catch(() => undefined).then(() => renderApp(rootElement))
 }
 
-// The static landing shell only stands in for "/"; any other resolved route,
-// or a home page that never reports ready, takes it down.
-router.subscribe('onResolved', (event) => {
-  if (event.toLocation.pathname !== '/') removeBootShell()
-})
-window.setTimeout(removeBootShell, 15000)

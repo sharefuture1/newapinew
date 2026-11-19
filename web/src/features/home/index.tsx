@@ -23,7 +23,6 @@ import { PublicLayout } from '@/components/layout'
 import { Footer } from '@/components/layout/components/footer'
 import { LoadingState } from '@/components/loading-state'
 import { useTheme } from '@/context/theme-provider'
-import { removeBootShell } from '@/lib/boot-shell'
 import { isLikelyHtml } from '@/lib/content-format'
 import { useAuthStore } from '@/stores/auth-store'
 
@@ -53,11 +52,6 @@ export function Home() {
   const isAuthenticated = !!auth.user
   const { content, isLoaded, isUrl } = useHomePageContent()
 
-  // WendingAI: hand over from the static index.html shell once the real home
-  // page (default hero or custom content) can render.
-  useEffect(() => {
-    if (isLoaded) removeBootShell()
-  }, [isLoaded])
 
   const syncIframePreferences = useCallback(() => {
     try {
