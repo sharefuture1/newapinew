@@ -310,11 +310,13 @@ export function NotificationPopover({
             variant='ghost'
             size='icon'
             className={cn('relative size-9', className)}
-            aria-label={t('Notifications')}
           />
         }
       >
-        <Bell className='size-[1.2rem]' />
+        <Bell className='size-[1.2rem]' aria-hidden='true' />
+        {/* WendingAI: name the button from its content so the accessible name
+            contains the visible unread count (WCAG 2.5.3 label in name). */}
+        <span className='sr-only'>{t('Notifications')}</span>
         {unreadCount > 0 ? (
           <Badge
             variant='destructive'

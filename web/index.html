@@ -69,11 +69,109 @@
         document.documentElement.classList.add(theme)
       })()
     </script>
+    <!-- WendingAI (2026-11): the current site logo is served from this R2
+         bucket; warm the connection before React asks for it. Drop this hint
+         when the logo moves to the site's own domain. -->
+    <link
+      rel="preconnect"
+      href="https://pub-b1ca55f26b8c4b68bed9070080a97700.r2.dev"
+    />
+    <!-- WendingAI (2026-11): static landing shell shown on "/" while the app
+         bundle downloads. Self-contained styles; removed by the app once the
+         home page (or any other route) has rendered. -->
+    <style>
+      #wd-boot{position:fixed;inset:0;z-index:40;overflow:auto;background:#fff;color:#111;font-family:sans-serif}
+      html.dark #wd-boot{background:#202020;color:#f2f2f2}
+      #wd-boot[hidden]{display:none}
+      #wd-boot .wb-bar{box-sizing:content-box;display:flex;align-items:center;justify-content:space-between;max-width:1280px;margin:0 auto;padding:14px 20px}
+      #wd-boot .wb-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;color:inherit;text-decoration:none}
+      #wd-boot .wb-brand img{width:28px;height:28px;border-radius:8px}
+      #wd-boot .wb-hero{box-sizing:content-box;max-width:1280px;margin:0 auto;padding:96px 20px 48px}
+      @media (min-width:640px){#wd-boot .wb-hero{padding-left:32px;padding-right:32px}}
+      @media (min-width:768px){#wd-boot .wb-hero{padding-top:128px}}
+      /* Same column width as the app hero (lg:col-span-7 of 12, 48px gaps) so
+         the heading wraps identically and the hand-over keeps the LCP. */
+      @media (min-width:1024px){#wd-boot .wb-col{width:calc((100% - 528px) * 7 / 12 + 288px)}}
+      #wd-boot .wb-hdot{display:inline-block;width:.16em;height:.16em;margin-left:.5rem;border-radius:50%;background:#0071bb}
+      #wd-boot .wb-badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(127,127,127,.3);border-radius:999px;padding:4px 12px;font-size:12px;color:#5f5f5f}
+      html.dark #wd-boot .wb-badge,html.dark #wd-boot .wb-muted{color:#c4c4c4}
+      #wd-boot .wb-dot{width:6px;height:6px;border-radius:50%;background:#0071bb}
+      #wd-boot h1{margin:20px 0 0;font-size:clamp(2.75rem,8.5vw,6.25rem);line-height:.92;font-weight:900;letter-spacing:-.035em;overflow-wrap:break-word}
+      #wd-boot .wb-muted{color:#5f5f5f}
+      #wd-boot ul{display:flex;flex-wrap:wrap;gap:8px 20px;margin:24px 0 0;padding:0;list-style:none;font-size:14px}
+      #wd-boot h2{margin:40px 0 0;font-size:22px;font-weight:600}
+      #wd-boot p{margin:12px 0 0;font-size:15px;line-height:1.6}
+      #wd-boot .wb-cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+      #wd-boot .wb-btn{display:inline-flex;align-items:center;height:44px;padding:0 18px;border-radius:10px;font-size:14px;font-weight:500;text-decoration:none;border:1px solid rgba(127,127,127,.35);color:inherit}
+      #wd-boot .wb-primary{background:#0071bb;border-color:#0071bb;color:#fff}
+    </style>
     <!--umami-->
     <!--Google Analytics-->
   </head>
 
   <body>
     <div id="root" translate="no" class="notranslate"></div>
+    <div id="wd-boot" hidden>
+      <div class="wb-bar">
+        <a class="wb-brand" href="/"
+          ><img src="/logo.png" alt="" width="28" height="28" /><span
+            data-wd-name
+            >稳定AI WendingAI</span
+          ></a
+        >
+        <a class="wb-btn wb-primary" href="/sign-up">注册</a>
+      </div>
+      <main class="wb-hero">
+        <div class="wb-col">
+          <span class="wb-badge"
+            ><span class="wb-dot"></span>企业级 AI 大模型 API 平台</span
+          >
+          <!-- Default = the live system name; replaced from the cached status. -->
+          <h1><span data-wd-name>稳定AI WendingAI</span><span class="wb-hdot"></span></h1>
+          <ul class="wb-muted">
+            <li>兼容主流接口协议</li>
+            <li>稳定高速</li>
+            <li>按量计费</li>
+          </ul>
+        </div>
+        <h2>为你的应用连接大模型。</h2>
+        <p class="wb-muted">选择模型，获取密钥，开始第一次调用。</p>
+        <div class="wb-cta">
+          <a class="wb-btn wb-primary" href="/sign-up">创建 API 密钥</a>
+          <a class="wb-btn" href="/wallet">钱包充值</a>
+          <a
+            class="wb-btn"
+            href="https://shop.wending.ai/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >WendingAI 商城</a
+          >
+        </div>
+      </main>
+    </div>
+    <script>
+      ;(function () {
+        if (location.pathname !== '/') return
+        var boot = document.getElementById('wd-boot')
+        if (!boot) return
+        // The shell text is Simplified Chinese; other interface languages
+        // wait for the app instead of flashing the wrong language.
+        var lang = ''
+        try {
+          lang = localStorage.getItem('i18nextLng') || ''
+        } catch (e) {}
+        lang = (lang || navigator.language || '').toLowerCase()
+        if (lang.indexOf('zh') !== 0 || /^(zhtw|zh-tw|zh-hk|zh-mo|zh-hant)/.test(lang)) return
+        try {
+          var cached = JSON.parse(localStorage.getItem('status') || 'null')
+          var name = cached && cached.system_name
+          if (typeof name === 'string' && name) {
+            var nodes = boot.querySelectorAll('[data-wd-name]')
+            for (var i = 0; i < nodes.length; i++) nodes[i].textContent = name
+          }
+        } catch (e) {}
+        boot.hidden = false
+      })()
+    </script>
   </body>
 </html>

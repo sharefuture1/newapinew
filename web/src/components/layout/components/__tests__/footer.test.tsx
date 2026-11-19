@@ -23,7 +23,7 @@ import {
   createRouter,
   RouterProvider,
 } from '@tanstack/react-router'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 
 import { Footer } from '../footer'
@@ -74,4 +74,25 @@ describe('site footer', () => {
       )
     })
   }
+
+  it('sanitizes the admin footer HTML before rendering it', async () => {
+    config.footerHtml =
+      '<a href="https://t.me/wendingai">Telegram</a><img src="x" onerror="window.__footerXss=1"><script>window.__footerXss=2</script>'
+    await renderFooter()
+
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: 'Telegram' })).toBeInTheDocument()
+    )
+    const footer = document.querySelector('.custom-footer')
+    expect(footer?.querySelector('script')).toBeNull()
+    expect(footer?.querySelector('img')?.getAttribute('onerror')).toBeNull()
+  })
+
+  it('uses the WendingAI tagline instead of the generic upstream one', async () => {
+    config.footerHtml = ''
+    await renderFooter()
+
+    expect(screen.getByText('Enterprise AI API Gateway')).toBeInTheDocument()
+    expect(screen.queryByText('Powerful API Management Platform')).toBeNull()
+  })
 })

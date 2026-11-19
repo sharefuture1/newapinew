@@ -109,7 +109,9 @@ For commercial licensing, please contact support@quantumnous.com
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.692 0.141 243.716);
+  /* WendingAI (2026-11): darkened from L 0.692 so white text on primary and
+   * primary text on white/tinted surfaces meet WCAG AA (≥ 4.5:1). */
+  --primary: oklch(0.53 0.142 243.716);
   --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.95 0 0);
   --secondary-foreground: oklch(0.42 0.16 250);
