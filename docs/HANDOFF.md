@@ -1,6 +1,35 @@
 # HANDOFF – 问鼎AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-19 15:50 EST – production = `wending` f15ca1d on api.wending.ai (backend, restarted 2026-11-19 20:39 UTC) and 1e5cfaa web on go.wending.ai (dpl_6kNrdp6KNX7Nbtmy3nMC3zv5sfqJ)._
+_Last updated: 2026-11-19 16:55 EST – production = `wending` fa32c8e on api.wending.ai (backend restarted 2026-11-19 21:47 UTC) and go.wending.ai (dpl_GCaVwXPVKwp1RQgsaZ42GQRaUU2S)._
+
+## Production deployment record — 2026-11-19 21:28–21:48 UTC (PR #8 remove landing shell, logo/name options, fa32c8e)
+
+- Stone report: "蒙了一层", old style shows then new style flashes on refresh, homepage buttons need two clicks.
+- Root cause (headless Chrome, zh-CN, mobile + desktop, cold + warm, both domains): the PR #6 static shell `#wd-boot`
+  (position fixed, z-index 40, its own markup + the new /logo.png) stayed on top of the already-rendered React app for
+  1.5–6 s (elementFromPoint = shell while the React header already existed), then was removed and the React header
+  showed the DB `Logo` option (old R2 wendingai.jpg). Clicks during that window hit shell links (full page loads) or
+  landed as the shell was being removed. No service worker involved.
+- Fix: PR #8 (`wending-remove-boot-shell` → fa32c8e) restores index.html from 573903d18 (no shell, no R2 preconnect),
+  deletes `web/src/lib/boot-shell.ts`; lazy locales / contrast / robots / sitemap / footer sanitising from PR #6 stay.
+- Options (DB, live via SyncOptions within SYNC_FREQUENCY, no restart needed): `Logo` R2 wendingai.jpg → `/logo.png`
+  (same-origin on api and go, 180×180 14 KB); `SystemName` `稳定AI WendingAI` (typo) → `问鼎AI WendingAI`.
+  Backup `/opt/new-api/options-backup-20261119-212839-logo-name.csv`, rollback SQL
+  `/opt/new-api/options-rollback-20261119-212839.sql` (both 600).
+- go.wending.ai production: **dpl_GCaVwXPVKwp1RQgsaZ42GQRaUU2S** (fa32c8e); previous dpl_6kNrdp6KNX7Nbtmy3nMC3zv5sfqJ.
+- Backend: **`v1.0.0-rc.45-wending-fa32c8e`**, sha256 `8de3c8bcf86ad7bded08c32d557508249e257ed795e388aa7d7d80f5ec1c4cb5`,
+  200 after 3.5 s. Backups TS 20261119-214712: `db-backup-20261119-214712-pre-fa32c8e.dump` (41 MB, 43 table-data),
+  `new-api.bak-20261119-214712` (= f15ca1d, 78c200e3…), `env.conf.bak-20261119-214712`. Caddy untouched, no migration.
+- Verified both domains: no shell in HTML/DOM, never topmost element, header logo `/logo.png` on every sample
+  (old jpg never seen over 6 reloads), single click works at 200 ms–5 s after navigation; mobile menu taps work;
+  控制台/模型广场 for guests open the intended "需要登录 … 5 秒后跳转" dialog (by design, not a dead click).
+  api: `/v1/models` 401, chat ok, OAuth fake code 400 / bogus client 401, journal 0 panic/fatal.
+- Note: without the shell a cold load from a far network shows a blank page until the bundle runs (~3 s from the
+  test box, TTFB ~0.9 s). Visitors with an old `status` in localStorage may see the old logo once until /api/status
+  refreshes.
+- **Rollback:** backend `install -m 0755 /opt/new-api/new-api.bak-20261119-214712 /opt/new-api/new-api && systemctl restart new-api`;
+  go: promote dpl_6kNrdp6KNX7Nbtmy3nMC3zv5sfqJ; options: `psql "$SQL_DSN" -f /opt/new-api/options-rollback-20261119-212839.sql`.
+
 
 ## Production deployment record — 2026-11-19 20:36–20:39 UTC (PR #4 + #5 + #6 + #7, f15ca1d)
 
