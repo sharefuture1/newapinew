@@ -23,5 +23,5 @@ export const BOOT_SHELL_ID = 'wd-boot'
 
 export function removeBootShell(): void {
   if (typeof document === 'undefined') return
-  document.getElementById(BOOT_SHELL_ID)?.remove()
+  document.querySelector(`#${BOOT_SHELL_ID}`)?.remove()
 }

@@ -53,9 +53,16 @@ export const lazyLocaleBackend: BackendModule = {
       callback(null, {})
       return
     }
-    load()
-      .then((module) => callback(null, module.default[namespace] ?? {}))
-      .catch((error: unknown) => callback(error as Error, null))
+    void (async () => {
+      let data: ResourceKey
+      try {
+        data = (await load()).default[namespace] ?? {}
+      } catch (error) {
+        callback(error as Error, null)
+        return
+      }
+      callback(null, data)
+    })()
   },
 }
 
