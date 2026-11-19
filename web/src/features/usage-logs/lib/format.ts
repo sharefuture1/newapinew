@@ -234,14 +234,23 @@ export function getResponseTimeColor(
 }
 
 /**
- * Format model name with mapping indicator
+ * Format model name with mapping indicator.
+ * Modified by WendingAI (2026-11): the mapped upstream model and the model
+ * name returned by the upstream are root-only diagnostics; other viewers only
+ * get the requested model name (the backend strips these fields as well).
  */
-export function formatModelName(log: UsageLog): {
+export function formatModelName(
+  log: UsageLog,
+  showModelTrace = false
+): {
   name: string
   isMapped: boolean
   actualModel?: string
   responseModel?: LogOtherData['response_model']
 } {
+  if (!showModelTrace) {
+    return { name: log.model_name, isMapped: false }
+  }
   const other = parseLogOther(log.other)
   const isMapped = !!(
     other?.is_model_mapped &&

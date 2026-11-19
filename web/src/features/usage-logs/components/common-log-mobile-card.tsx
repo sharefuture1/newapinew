@@ -40,7 +40,7 @@ import {
 } from '../lib/utils'
 import { ModelBadge, ResponseModelDetails } from './model-badge'
 import { StreamTpsCell, TimingMetricsCell } from './timing-metrics-cell'
-import { useUsageLogsContext } from './usage-logs-provider'
+import { useLogsViewScope, useUsageLogsContext } from './usage-logs-provider'
 
 type FieldName =
   | 'model'
@@ -69,7 +69,8 @@ export function CommonLogMobileCard<TData>(props: {
   const other = parseLogOther(log.other)
   const displayable = isDisplayableLogType(log.type)
   const timing = isTimingLogType(log.type)
-  const model = formatModelName(log)
+  const { isRootView } = useLogsViewScope()
+  const model = formatModelName(log, isRootView)
   const config = getLogTypeConfig(log.type)
   const group = log.group || other?.group || ''
   const groupRatio =

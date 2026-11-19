@@ -24,12 +24,28 @@ import {
 } from '@tanstack/react-table'
 import { render, screen, within, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { expect, it, vi } from 'vitest'
+import { afterEach, expect, it, vi } from 'vitest'
+
+import { useAuthStore } from '@/stores/auth-store'
 
 import { usageLogSchema, type UsageLog } from '../../data/schema'
 import { useCommonLogsColumns } from '../columns/common-logs-columns'
 import { UsageLogsMobileList } from '../usage-logs-mobile-card'
 import { UsageLogsProvider, useUsageLogsContext } from '../usage-logs-provider'
+
+function signInAs(role: number) {
+  useAuthStore.getState().auth.setUser({
+    id: 1,
+    username: 'viewer',
+    role,
+  } as unknown as Parameters<
+    ReturnType<typeof useAuthStore.getState>['auth']['setUser']
+  >[0])
+}
+
+afterEach(() => {
+  useAuthStore.getState().auth.setUser(null)
+})
 
 const longName = 'enterprise-production-failover-2026-without-any-short-alias'
 const log = usageLogSchema.parse({
@@ -97,7 +113,8 @@ function renderLogs(props: Parameters<typeof Fixture>[0] = {}) {
   )
 }
 
-it('shows model mismatch evidence when tapping the mobile model badge', async () => {
+it('shows model mismatch evidence to root when tapping the mobile model badge', async () => {
+  signInAs(100)
   const user = userEvent.setup()
   renderLogs({
     logs: [
@@ -303,7 +320,8 @@ it('labels a task whose result was returned in the response as synchronous', () 
   expect(screen.queryByText('Async')).not.toBeInTheDocument()
 })
 
-it('shows mapped model names in full when inspecting a mobile model badge', async () => {
+it('shows mapped model names in full to root when inspecting a mobile model badge', async () => {
+  signInAs(100)
   const user = userEvent.setup()
   renderLogs({
     logs: [
@@ -337,3 +355,31 @@ it('shows loading placeholders without displaying stale log fields', () => {
     screen.queryByRole('button', { name: /^Model:/ })
   ).not.toBeInTheDocument()
 })
+
+it.each([1, 10])(
+  'hides response and mapped model names from non-root viewers (role %s)',
+  async (role) => {
+    signInAs(role)
+    renderLogs({
+      logs: [
+        {
+          ...log,
+          other: JSON.stringify({
+            is_model_mapped: true,
+            upstream_model_name: 'provider-mapped-model',
+            response_model: {
+              requested_model: longName,
+              upstream_model: 'provider-mapped-model',
+              returned_model: 'unexpected-model',
+            },
+          }),
+        },
+      ],
+    })
+    expect(
+      screen.getByRole('button', { name: `Model: ${longName}` })
+    ).toBeVisible()
+    expect(screen.queryByText(/unexpected-model/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/provider-mapped-model/)).not.toBeInTheDocument()
+  }
+)
