@@ -1,6 +1,31 @@
 # HANDOFF – 问鼎AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-18 14:40 EST – `wending` = 1a74589 (PR #4, model trace root-only). go.wending.ai = 1a74589; api.wending.ai still runs 2fb5dac — new binary STAGED, restart pending Stone's approval._
+_Last updated: 2026-11-19 14:50 EST – `wending` = 509e8b4 (PR #5 response model alias, includes PR #4). go.wending.ai = 1a74589 (web unchanged since). api.wending.ai still runs 2fb5dac — `/opt/new-api/new-api.staged-509e8b4` STAGED, restart pending Stone's approval._
+
+## 2026-11-19: PR #5 – relay responses report the requested model (STAGED, not live)
+
+- Request (Stone): "api 返回的也要改名成用户请求的模型".
+- PR #5 `wending-response-model-alias` → `wending` **509e8b4**. New `middleware/response_model_alias.go`
+  (`ResponseModelAlias()`, installed before `Distribute()` on /v1 HTTP relay, /v1beta Gemini, /pg, /v1/responses,
+  /v1/images/*). It wraps the response writer and rewrites `model`, `message.model`, `response.model`,
+  `modelVersion` to `original_model` (the requested name): buffered JSON bodies (Content-Length recomputed) and every
+  SSE / NDJSON `data:` line. Non-JSON (audio etc.), compressed bodies, unknown requested model → untouched.
+  Billing/logs/diagnostics are unaffected (they read the upstream body first). Toggle: env
+  `RESPONSE_MODEL_ALIAS_ENABLED=false` restores passthrough (default on).
+  Not covered: WebSocket realtime / responses-over-WS, video / MJ task routes.
+- Tests: `middleware/response_model_alias_wending_test.go`; full Go suites pass except the pre-existing, env-related
+  `relay/channel/advancedcustom` TestAdaptorMasksDialedHostsInDialFailure (fails on origin/wending too).
+  Local smoke (throwaway SQLite instance + fake upstream returning deepseek-v4.1-flash): chat non-stream/stream,
+  Claude /v1/messages non-stream/stream, embeddings all returned `kimi-k3`; quota/token counts unchanged; log
+  diagnostics still record the returned upstream name (root-only).
+- Binary `v1.0.0-rc.45-wending-509e8b4`, sha256 `b03374b7c9e01c12207e595fabfa1727f9ae1a4f4403bafbbe3ba69afee3540b`,
+  staged at `/opt/new-api/new-api.staged-509e8b4` (supersedes and replaced `new-api.staged-1a74589`). Web unchanged
+  vs 1a74589, so no Vercel deploy. Go-live after approval: back up, `install -m 0755 /opt/new-api/new-api.staged-509e8b4
+  /opt/new-api/new-api && systemctl restart new-api`; no DB migration; rollback = reinstall backup (2fb5dac, e1800a48…).
+- Frontend review (2026-11-19, Lighthouse on go.wending.ai: mobile perf 30 / a11y 96 / BP 100 / SEO 92; desktop
+  perf 67): top items — 7 locale JSONs bundled into the entry chunk (entry 5.0 MB, 1.4 MB gz; initial JS ~1.9 MB gz);
+  system Logo is a 742 KB JPEG on r2.dev without cache headers; robots.txt / sitemap.xml return the SPA HTML;
+  gpt-* model names enabled for users (compliance); sign-up CTA contrast; footerHtml rendered unsanitized.
 
 ## 2026-11-18 (evening): PR #4 – model trace hidden from non-root (backend STAGED, not live)
 
