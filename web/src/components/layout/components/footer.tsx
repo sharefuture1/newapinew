@@ -128,13 +128,17 @@ function useSanitizedFooterHtml(footerHtml?: string | null): string | null {
   useEffect(() => {
     if (!footerHtml) return
     let cancelled = false
-    void import('dompurify').then((module) => {
-      if (cancelled) return
-      setSanitized({
-        source: footerHtml,
-        html: module.default.sanitize(footerHtml),
+    import('dompurify')
+      .then((module) => {
+        if (cancelled) return
+        setSanitized({
+          source: footerHtml,
+          html: module.default.sanitize(footerHtml),
+        })
       })
-    })
+      .catch(() => {
+        // Never fall back to the raw HTML; the About/legal links still render.
+      })
     return () => {
       cancelled = true
     }

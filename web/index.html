@@ -145,6 +145,14 @@
         if (location.pathname !== '/') return
         var boot = document.getElementById('wd-boot')
         if (!boot) return
+        // The shell text is Simplified Chinese; other interface languages
+        // wait for the app instead of flashing the wrong language.
+        var lang = ''
+        try {
+          lang = localStorage.getItem('i18nextLng') || ''
+        } catch (e) {}
+        lang = (lang || navigator.language || '').toLowerCase()
+        if (lang.indexOf('zh') !== 0 || /^(zhtw|zh-tw|zh-hk|zh-mo|zh-hant)/.test(lang)) return
         try {
           var cached = JSON.parse(localStorage.getItem('status') || 'null')
           var name = cached && cached.system_name
