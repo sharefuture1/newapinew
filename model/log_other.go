@@ -25,6 +25,16 @@ var legacySensitiveLogOtherKeys = []string{
 	"reject_reason",
 }
 
+// rootOnlyModelTraceLogOtherKeys are model-routing diagnostics (the upstream
+// model a request was mapped to and the model name the upstream returned).
+// WendingAI: they are written as public fields upstream, but only root may see
+// them; user and admin projections strip them. Modified by WendingAI (2026-11).
+var rootOnlyModelTraceLogOtherKeys = []string{
+	"response_model",
+	"upstream_model_name",
+	"is_model_mapped",
+}
+
 type logOtherVisibility int
 
 const (
@@ -261,6 +271,15 @@ func formatLogOtherJSON(value string, visibility logOtherVisibility) string {
 		if visibility == logOtherVisibilityAdmin {
 			if _, exists := values[logOtherRootInfoKey]; exists {
 				delete(values, logOtherRootInfoKey)
+				changed = true
+			}
+		}
+	}
+
+	if visibility != logOtherVisibilityRoot {
+		for _, key := range rootOnlyModelTraceLogOtherKeys {
+			if _, exists := values[key]; exists {
+				delete(values, key)
 				changed = true
 			}
 		}
