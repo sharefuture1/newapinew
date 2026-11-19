@@ -1,6 +1,33 @@
 # HANDOFF – 问鼎AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-18 15:15 EST – production = `wending` 2fb5dac (PR #3 merged) on api.wending.ai and go.wending.ai; SESSION_COOKIE_TRUSTED_URL + Caddy edge config live; edge secret rotated._
+_Last updated: 2026-11-18 14:40 EST – `wending` = 1a74589 (PR #4, model trace root-only). go.wending.ai = 1a74589; api.wending.ai still runs 2fb5dac — new binary STAGED, restart pending Stone's approval._
+
+## 2026-11-18 (evening): PR #4 – model trace hidden from non-root (backend STAGED, not live)
+
+- Request (Stone): hide "响应模型 / 上游请求模型 / 上游返回的模型名…不一致" from all users, keep for root.
+- PR #4 `wending-hide-model-trace` → merged into `wending` as **1a74589**.
+  - Backend: `model/log_other.go` strips `response_model`, `upstream_model_name`, `is_model_mapped` from
+    `other` unless visibility is root (affects self logs, search, token logs, export, and admin (role 10) list);
+    `controller/task.go` blanks `properties.upstream_model_name` for non-root. Tests:
+    `model/log_model_trace_wending_test.go`, `controller/task_model_trace_wending_test.go`.
+  - Frontend: usage-logs table column, mobile card, details dialog (Response Model + Model Mapping), task details
+    show them only for root view (role 100 + "all" scope). Web 204 files / 2386 tests, `tsgo -b`, build OK.
+  - Relay response bodies NOT changed: OpenAI-compatible channels pass the upstream `model` field through, so API
+    clients still see e.g. `"model":"deepseek-v4.1-flash"` in the JSON. Changing that needs a separate decision.
+- go.wending.ai production: **dpl_HRiJJ3s3HToyWmMb4DN9r6EG5MnN** (1a74589); previous dpl_9YMu3WZUJsJWzn2H3mcrMqfynNhZ.
+  Frontend gating is live there; the backend still returns the fields until the restart.
+- Staged binary on vultr-sv: `/opt/new-api/new-api.staged-1a74589` (`v1.0.0-rc.45-wending-1a74589`, 0755),
+  sha256 `a364d555a072e155d692cc543e536efe80574d9b9cd5da2cc3784cc06c861ab4`. **Not swapped, not restarted.**
+  To go live (after approval): back up current binary (`cp -a /opt/new-api/new-api /opt/new-api/new-api.bak-<TS>`),
+  `install -m 0755 /opt/new-api/new-api.staged-1a74589 /opt/new-api/new-api && systemctl restart new-api`.
+  No DB migration in this change. Rollback: reinstall the backup (= 2fb5dac, sha256 e1800a48…) and restart.
+- Why kimi-k3 answered as deepseek-v4.1-flash: channel 35 "国模wendingai" (type OpenAI, https://wb2.wending.ai) has
+  no mapping for kimi-k3 (its mapping only rewrites gpt-5.5/gpt-5.4), so new-api forwarded `kimi-k3` unchanged.
+  The upstream WorkBuddy manager (host "vultr", `/opt/workbuddy-manager`, settings key `model_map` in
+  `data/manager.db`) maps `kimi-k3`, `kimi-k3.1`, `kimi-k3.1-pro`, `deepseek-v4-pro` → `deepseek-v4.1-flash`.
+  Channel 24 "kimi" is disabled. Nothing was changed (read-only inspection).
+- Vercel Git: project `wending-go` still has no Git link (no `link` in project, pushes create no deployments) —
+  deploys keep going through the API.
 
 ## Production deployment record — 2026-11-18 20:00 UTC (2fb5dac: PR #2 + PR #3)
 
