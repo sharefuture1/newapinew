@@ -24,7 +24,16 @@ var ResponseModelAliasEnabled = common.GetEnvOrDefaultBool("RESPONSE_MODEL_ALIAS
 // responseModelAliasPaths are the JSON locations that declare the serving model
 // in OpenAI (chat, completions, embeddings, images, responses), Claude and
 // Gemini payloads, both for whole bodies and for individual stream events.
-var responseModelAliasPaths = []string{"model", "message.model", "response.model", "modelVersion"}
+// usage.quota.* is a quota extension some upstream gateways add to usage; it
+// names the serving model too.
+var responseModelAliasPaths = []string{
+	"model", "message.model", "response.model", "modelVersion",
+	"usage.quota.model", "response.usage.quota.model",
+}
+
+// responseModelAliasDropPaths list upstream model names that cannot be mapped
+// back to the requested name; non-empty ones are removed.
+var responseModelAliasDropPaths = []string{"usage.quota.shared_models", "response.usage.quota.shared_models"}
 
 // ResponseModelAlias wraps the response writer for relay routes. It only
 // changes what the client receives: billing, logs and diagnostics read the
@@ -237,6 +246,17 @@ func rewriteResponseModel(body []byte, target string) []byte {
 			continue
 		}
 		next, err := sjson.SetBytes(out, path, target)
+		if err != nil {
+			continue
+		}
+		out, changed = next, true
+	}
+	for _, path := range responseModelAliasDropPaths {
+		value := gjson.GetBytes(out, path)
+		if !value.IsArray() || len(value.Array()) == 0 {
+			continue
+		}
+		next, err := sjson.DeleteBytes(out, path)
 		if err != nil {
 			continue
 		}
