@@ -158,3 +158,20 @@ func TestResponseModelAliasErrorAfterBufferedBody(t *testing.T) {
 		t.Fatalf("unexpected response %d %s", w.Code, w.Body.String())
 	}
 }
+
+func TestResponseModelAliasUpstreamQuotaExtension(t *testing.T) {
+	body := `{"model":"deepseek-v4.1-flash","choices":[],"usage":{"total_tokens":8,"quota":{"model":"deepseek-v4.1-flash","percent":0,"shared_models":["deepseek-v4-pro"]}}}`
+	w := serveWithAlias(t, "kimi-k3", func(c *gin.Context) { writeUpstreamJSON(c, body) })
+	out := w.Body.String()
+	if strings.Contains(out, "deepseek") {
+		t.Fatalf("upstream name leaked: %s", out)
+	}
+	if gjson.Get(out, "usage.quota.model").Str != "kimi-k3" || gjson.Get(out, "usage.total_tokens").Int() != 8 {
+		t.Fatalf("unexpected usage: %s", out)
+	}
+	empty := `{"model":"up","usage":{"quota":{"model":"up","shared_models":[]}}}`
+	w = serveWithAlias(t, "kimi-k3", func(c *gin.Context) { writeUpstreamJSON(c, empty) })
+	if !gjson.Get(w.Body.String(), "usage.quota.shared_models").IsArray() {
+		t.Fatalf("empty shared_models should stay: %s", w.Body.String())
+	}
+}
