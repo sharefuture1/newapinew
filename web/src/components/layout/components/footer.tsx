@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 // Modified by WendingAI (2026-11): upstream credit moved from the footer to
 // the About page open-source notice (AGPLv3 §7(b)/(c)).
 import { Link } from '@tanstack/react-router'
-import { Fragment, useMemo } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { useStatus } from '@/hooks/use-status'
@@ -117,6 +117,32 @@ function LegalLinks(props: { leadingSeparator?: boolean }) {
   )
 }
 
+// Modified by WendingAI (2026-11): the admin-configured footer HTML goes
+// through DOMPurify like every other HTML setting. DOMPurify is loaded on
+// demand so it stays out of the landing-page chunk.
+function useSanitizedFooterHtml(footerHtml?: string | null): string | null {
+  const [sanitized, setSanitized] = useState<{
+    source: string
+    html: string
+  } | null>(null)
+  useEffect(() => {
+    if (!footerHtml) return
+    let cancelled = false
+    void import('dompurify').then((module) => {
+      if (cancelled) return
+      setSanitized({
+        source: footerHtml,
+        html: module.default.sanitize(footerHtml),
+      })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [footerHtml])
+  if (!footerHtml || sanitized?.source !== footerHtml) return null
+  return sanitized.html
+}
+
 export function Footer(props: FooterProps) {
   const { t } = useTranslation()
   const {
@@ -189,6 +215,7 @@ export function Footer(props: FooterProps) {
   )
 
   const displayColumns = props.columns ?? fallbackColumns
+  const safeFooterHtml = useSanitizedFooterHtml(footerHtml)
 
   if (footerHtml) {
     return (
@@ -202,9 +229,9 @@ export function Footer(props: FooterProps) {
           <div className='bg-muted/20 border-border/50 flex flex-col items-center justify-between gap-4 rounded-2xl border px-4 py-4 backdrop-blur-sm sm:flex-row sm:px-5'>
             <div
               className='custom-footer text-muted-foreground min-w-0 text-center text-sm sm:text-left'
-              dangerouslySetInnerHTML={{ __html: footerHtml }}
+              dangerouslySetInnerHTML={{ __html: safeFooterHtml ?? '' }}
             />
-            <div className='border-border/60 text-muted-foreground/70 flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t pt-4 text-xs sm:w-auto sm:justify-end sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5'>
+            <div className='border-border/60 text-muted-foreground flex w-full flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t pt-4 text-xs sm:w-auto sm:justify-end sm:border-t-0 sm:border-l sm:pt-0 sm:pl-5'>
               <Link
                 to='/about'
                 className='hover:text-foreground transition-colors duration-200'
@@ -238,7 +265,7 @@ export function Footer(props: FooterProps) {
               </span>
             </Link>
             <p className='text-muted-foreground/60 mt-3 max-w-[200px] text-xs leading-relaxed'>
-              {t('Powerful API Management Platform')}
+              {t('Enterprise AI API Gateway')}
             </p>
           </div>
 
@@ -266,7 +293,7 @@ export function Footer(props: FooterProps) {
         {/* Copyright + optional legal links inline on the left, project
             attribution on the right; wraps on narrow screens. */}
         <div className='border-border/30 mt-12 flex flex-col items-center justify-between gap-x-3 gap-y-2 border-t pt-6 sm:flex-row'>
-          <div className='text-muted-foreground/40 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs sm:justify-start'>
+          <div className='text-muted-foreground flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs sm:justify-start'>
             <span>
               &copy; {currentYear} {displayName}.{' '}
               {props.copyright ?? t('footer.defaultCopyright')}
@@ -275,7 +302,7 @@ export function Footer(props: FooterProps) {
           </div>
           <Link
             to='/about'
-            className='text-muted-foreground/60 hover:text-foreground text-xs transition-colors duration-200'
+            className='text-muted-foreground hover:text-foreground text-xs transition-colors duration-200'
           >
             {t('About')}
           </Link>

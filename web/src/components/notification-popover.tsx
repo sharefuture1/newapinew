@@ -310,13 +310,18 @@ export function NotificationPopover({
             variant='ghost'
             size='icon'
             className={cn('relative size-9', className)}
-            aria-label={t('Notifications')}
+            aria-label={
+              unreadCount > 0
+                ? `${t('Notifications')} (${unreadCount > 99 ? '99+' : unreadCount})`
+                : t('Notifications')
+            }
           />
         }
       >
-        <Bell className='size-[1.2rem]' />
+        <Bell className='size-[1.2rem]' aria-hidden='true' />
         {unreadCount > 0 ? (
           <Badge
+            aria-hidden='true'
             variant='destructive'
             className='absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center px-1 text-[10px] font-semibold tabular-nums'
           >

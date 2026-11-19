@@ -21,6 +21,7 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 
+import { removeBootShell } from '@/lib/boot-shell'
 import { installBuildMetadata } from '@/lib/build-metadata'
 import { applyFaviconToDom } from '@/lib/dom-utils'
 import '@/lib/dayjs'
@@ -31,7 +32,7 @@ import { readCachedStatus, statusQueryOptions } from '@/lib/status-query'
 import { DirectionProvider } from './context/direction-provider'
 import { FontProvider } from './context/font-provider'
 import { ThemeProvider } from './context/theme-provider'
-import './i18n/config'
+import { i18nReady } from './i18n/config'
 // Generated Routes
 import { routeTree } from './routeTree.gen'
 
@@ -123,8 +124,8 @@ if (!rootElement) {
     /* empty */
   }
 })()
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
+function renderApp(element: HTMLElement) {
+  const root = ReactDOM.createRoot(element)
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
@@ -139,3 +140,15 @@ if (!rootElement.innerHTML) {
     </StrictMode>
   )
 }
+
+if (!rootElement.innerHTML) {
+  // Wait for the interface language (fr/ru/ja/vi/zh-TW are fetched lazily).
+  void i18nReady.catch(() => undefined).then(() => renderApp(rootElement))
+}
+
+// The static landing shell only stands in for "/"; any other resolved route,
+// or a home page that never reports ready, takes it down.
+router.subscribe('onResolved', (event) => {
+  if (event.toLocation.pathname !== '/') removeBootShell()
+})
+window.setTimeout(removeBootShell, 15000)
