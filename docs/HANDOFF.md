@@ -1,6 +1,33 @@
 # HANDOFF – 问鼎AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-19 14:50 EST – `wending` = 509e8b4 (PR #5 response model alias, includes PR #4). go.wending.ai = 1a74589 (web unchanged since). api.wending.ai still runs 2fb5dac — `/opt/new-api/new-api.staged-509e8b4` STAGED, restart pending Stone's approval._
+_Last updated: 2026-11-19 15:50 EST – production = `wending` f15ca1d on api.wending.ai (backend, restarted 2026-11-19 20:39 UTC) and 1e5cfaa web on go.wending.ai (dpl_6kNrdp6KNX7Nbtmy3nMC3zv5sfqJ)._
+
+## Production deployment record — 2026-11-19 20:36–20:39 UTC (PR #4 + #5 + #6 + #7, f15ca1d)
+
+- Approved by Stone ("做好后你觉得前端没问题了再重启上线") after the frontend pass.
+- PR #6 `wending-fe-perf` (→ 1e5cfaa): lazy locales (only en + zhCN bundled; initial JS ~1.9 → ~1.0 MB gzip),
+  static landing shell `#wd-boot` in index.html for zh visitors on "/" (removed by Home when loaded, by any other
+  route, or after 15 s; `web/src/lib/boot-shell.ts`), preconnect to the R2 logo host (drop when the logo moves),
+  `web/public/robots.txt` + `sitemap.xml`, light `--primary` L 0.692 → 0.53 (WCAG AA), footer legal links full
+  contrast, footer HTML via DOMPurify (lazy), WendingAI tagline, notification button named from content.
+- PR #7 `wending-model-alias-quota` (→ f15ca1d): live check after the first restart showed `usage.quota.model`
+  (a wb2 gateway extension) still said deepseek-v4.1-flash; now aliased too, non-empty `usage.quota.shared_models`
+  dropped.
+- go.wending.ai production: **dpl_6kNrdp6KNX7Nbtmy3nMC3zv5sfqJ** (1e5cfaa); previous dpl_HRiJJ3s3HToyWmMb4DN9r6EG5MnN.
+- Lighthouse go.wending.ai (median of 3, zh-CN): mobile perf 38 → 54, FCP 5.2 → 3.7 s, LCP 16.8 → 5.0 s,
+  TBT 782 → 492 ms; desktop perf 53 → 95, FCP 3.9 → 0.6 s, LCP 6.3 → 0.7 s; a11y 96 → 100, SEO 92 → 100, BP 100.
+- Backups (TS 20261119-203622 UTC): `/opt/new-api/db-backup-20261119-203622-pre-1e5cfaa.dump` (pg_dump -Fc, 600,
+  41 MB, 43 table-data entries), `/opt/new-api/new-api.bak-20261119-203622` (= 2fb5dac, sha256 e1800a48…),
+  `/opt/new-api/env.conf.bak-20261119-203622` (env unchanged).
+- Restart 1: `v1.0.0-rc.45-wending-1e5cfaa` (sha256 19f5cf70…, kept as `new-api.staged-1e5cfaa`) → 200 after 3.7 s.
+  Restart 2: **`v1.0.0-rc.45-wending-f15ca1d`**, sha256 `78c200e3f7eb3b074475427a6281d91f37df2c51d6d0fd80573b2e1974170ffc`
+  → 200 after 3.5 s. Caddy not touched. No DB migration.
+- Verified: `/` 200 (shell present), `/robots.txt` text/plain, `/v1/models` 401, OAuth token fake code 400 /
+  bogus client 401, authorize 200, refresh foreign origin 403 / go origin 401; Stone's key: kimi-k3 non-stream,
+  stream (no "deepseek" anywhere), Claude /v1/messages all return `kimi-k3`; `/api/log/token` (user view) 0 rows
+  with model trace while DB rows still store it (root view); journal clean (0 panic, relay 5xx 0).
+- **Rollback:** `install -m 0755 /opt/new-api/new-api.bak-20261119-203622 /opt/new-api/new-api && systemctl restart new-api`
+  (2fb5dac); go.wending.ai: promote dpl_HRiJJ3s3HToyWmMb4DN9r6EG5MnN. DB restore only if really needed.
 
 ## 2026-11-19: PR #5 – relay responses report the requested model (STAGED, not live)
 
