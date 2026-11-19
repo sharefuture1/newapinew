@@ -83,10 +83,10 @@
       #wd-boot{position:fixed;inset:0;z-index:40;overflow:auto;background:#fff;color:#111;font-family:sans-serif}
       html.dark #wd-boot{background:#202020;color:#f2f2f2}
       #wd-boot[hidden]{display:none}
-      #wd-boot .wb-bar{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 20px}
+      #wd-boot .wb-bar{box-sizing:content-box;display:flex;align-items:center;justify-content:space-between;max-width:1280px;margin:0 auto;padding:14px 20px}
       #wd-boot .wb-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;color:inherit;text-decoration:none}
       #wd-boot .wb-brand img{width:28px;height:28px;border-radius:8px}
-      #wd-boot .wb-hero{max-width:1280px;margin:0 auto;padding:96px 20px 48px}
+      #wd-boot .wb-hero{box-sizing:content-box;max-width:1280px;margin:0 auto;padding:96px 20px 48px}
       @media (min-width:640px){#wd-boot .wb-hero{padding-left:32px;padding-right:32px}}
       @media (min-width:768px){#wd-boot .wb-hero{padding-top:128px}}
       /* Same column width as the app hero (lg:col-span-7 of 12, 48px gaps) so
