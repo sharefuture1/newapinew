@@ -69,6 +69,14 @@
         document.documentElement.classList.add(theme)
       })()
     </script>
+    <!-- Telegram Mini App: load telegram-web-app.js synchronously on the
+         initial page load. The script reads tgWebAppData from the page URL
+         at load time and keeps initData in memory; the SPA strips those
+         params when navigating to /sign-in, so loading it later (or with
+         async/defer) leaves initData empty and Mini App auto-login never
+         fires. Keep the dynamic loader in telegram-mini-app.ts as a
+         fallback; it no-ops once window.Telegram.WebApp exists. -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!--umami-->
     <!--Google Analytics-->
   </head>
