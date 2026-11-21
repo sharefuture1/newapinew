@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-// Wending fork-local route: OAuth consent screen ("问鼎AI账号一键授权").
+// Wending fork-local route: OAuth consent screen ("稳定AI账号一键授权").
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 import { WendingAuthorizePage } from '@/features/wending/oauth/authorize-page'

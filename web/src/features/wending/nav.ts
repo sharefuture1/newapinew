@@ -66,7 +66,7 @@ export function useWendingNavItems(): {
   }
 }
 
-/** Dynamic "问鼎应用" group: opens each client's launch_url in a new tab. */
+/** Dynamic "稳定应用" group: opens each client's launch_url in a new tab. */
 export function useWendingAppsNavGroup(): NavGroup | null {
   const { t } = useTranslation()
   const { data } = useQuery({

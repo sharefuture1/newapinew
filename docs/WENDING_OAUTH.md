@@ -1,7 +1,7 @@
-# 问鼎AI账号一键授权 (Wending OAuth)
+# 稳定AI账号一键授权 (Wending OAuth)
 
 A first-party OAuth 2.0 **authorization server** inside new-api. Our own products
-(first: **WendingAI 创作台**, `https://huabu.wending.ai`; later others and an MCP
+(first: **稳定AI 创作台**, `https://huabu.wending.ai`; later others and an MCP
 server) send a logged-in new-api user to a consent screen. When the user clicks
 **授权**, new-api creates a **dedicated API key** (a normal `tokens` row, so
 billing, quota, groups, model limits and logs behave exactly like any other key)
@@ -18,7 +18,7 @@ and hands it to the product through the **Authorization Code + PKCE (S256)** flo
 ```
  User browser            huabu.wending.ai (server)                   new-api
  ────────────            ─────────────────────────                   ───────
- click "用问鼎AI账号登录/授权"
+ click "用稳定AI账号登录/授权"
       ───────────────────► /api/auth/wending/start
                            create state + code_verifier,
                            store both in an httpOnly cookie
@@ -82,7 +82,7 @@ falls back to `http://localhost:3000`.
 
 ## Sign-in scope (`login`) – first-party one-click login
 
-Used by the WendingAI shop (shop.wending.ai) to let users sign in with their WendingAI account
+Used by the 稳定AI shop (shop.wending.ai) to let users sign in with their 稳定AI account
 **without** creating an API key.
 
 | Scope | Meaning |
@@ -148,7 +148,7 @@ No key, code, verifier or secret is ever logged (`/api/oauth/token` takes them i
 ## Registering a client (root)
 
 1. Console → 管理员 → **接入应用** → 新建应用.
-2. Name `WendingAI 创作台`, icon/homepage URLs, redirect URI(s), one per line, e.g.
+2. Name `稳定AI 创作台`, icon/homepage URLs, redirect URI(s), one per line, e.g.
    `https://huabu.wending.ai/api/auth/wending/callback` (https required; `http://localhost…`
    allowed for development; reverse-domain custom schemes like `ai.wending.mcp:/cb` for native/MCP).
 3. Confidential (default) for server-side apps; tick **公共客户端** only for apps that cannot keep a
@@ -157,9 +157,9 @@ No key, code, verifier or secret is ever logged (`/api/oauth/token` takes them i
 5. Optional: enable **显示在侧边栏**, set **侧边栏启动地址** (RP login-start URL) and sort order.
 6. Save → copy **Client ID** and **Client Secret** (shown once; use 重置密钥 to rotate).
 
-## Sidebar launch ("问鼎应用")
+## Sidebar launch ("稳定应用")
 
-Registered clients can appear in the logged-in console **left sidebar** under **问鼎应用 / Wending Apps**.
+Registered clients can appear in the logged-in console **left sidebar** under **稳定应用 / 稳定 Apps**.
 
 Admin fields on each client (接入应用):
 
@@ -308,7 +308,7 @@ sudo systemctl restart new-api
 # Restore the DB dump only if something else went wrong: pg_restore --clean -d "$SQL_DSN" /root/newapi-$TS.dump
 ```
 
-## Native desktop clients (WendingAI Switch)
+## Native desktop clients (稳定AI Switch)
 
 Branch `wending-desktop-auth`. Lets a desktop app do one-click sign-in without a secret.
 
@@ -330,7 +330,7 @@ Branch `wending-desktop-auth`. Lets a desktop app do one-click sign-in without a
 ### Deploy steps (not done; do these on production when ready)
 1. Merge `wending-desktop-auth`, build and deploy (the migration adds `device_id`/`device_name`
    columns through AutoMigrate).
-2. Admin → OAuth 客户端 → 新建: Client ID `wd_wendingai_switch`, name `WendingAI Switch`,
+2. Admin → OAuth 客户端 → 新建: Client ID `wd_wendingai_switch`, name `稳定AI Switch`,
    type **public**, scope `api`, redirect URI `http://127.0.0.1/wending/callback`, enabled.
 3. Check `curl https://api.wending.ai/api/oauth/clients/wd_wendingai_switch` returns 200;
    the desktop app then shows "一键登录" on the main line automatically.

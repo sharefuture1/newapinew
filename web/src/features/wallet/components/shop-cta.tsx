@@ -33,7 +33,7 @@ export function ShopCta() {
           <ShoppingBag className='size-5' aria-hidden='true' />
         </span>
         <div className='min-w-0'>
-          <p className='text-sm font-semibold'>{t('WendingAI Shop')}</p>
+          <p className='text-sm font-semibold'>{t('稳定AI Shop')}</p>
           <p className='text-muted-foreground mt-0.5 text-sm leading-relaxed'>
             {t('Plans, credits and AI services in one store.')}
           </p>

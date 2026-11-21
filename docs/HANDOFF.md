@@ -1,4 +1,4 @@
-# HANDOFF – 问鼎AI账号一键授权 (Wending OAuth) + standalone frontend
+# HANDOFF – 稳定AI账号一键授权 (Wending OAuth) + standalone frontend
 
 _Last updated: 2026-11-19 16:55 EST – production = `wending` fa32c8e on api.wending.ai (backend restarted 2026-11-19 21:47 UTC) and go.wending.ai (dpl_GCaVwXPVKwp1RQgsaZ42GQRaUU2S)._
 

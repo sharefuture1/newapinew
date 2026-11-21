@@ -27,7 +27,7 @@ var legacySensitiveLogOtherKeys = []string{
 
 // rootOnlyModelTraceLogOtherKeys are model-routing diagnostics (the upstream
 // model a request was mapped to and the model name the upstream returned).
-// WendingAI: they are written as public fields upstream, but only root may see
+// 稳定AI: they are written as public fields upstream, but only root may see
 // them; user and admin projections strip them. Modified by WendingAI (2026-11).
 var rootOnlyModelTraceLogOtherKeys = []string{
 	"response_model",

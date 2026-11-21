@@ -458,7 +458,7 @@ func tasksToDto(tasks []*model.Task, fillUser bool, viewerRole int) []*dto.TaskD
 		}
 		item := relay.TaskModel2Dto(task)
 		if viewerRole < common.RoleRootUser {
-			// WendingAI: the mapped upstream model name is root-only.
+			// 稳定AI: the mapped upstream model name is root-only.
 			properties := task.Properties
 			properties.UpstreamModelName = ""
 			item.Properties = properties

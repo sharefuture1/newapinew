@@ -24,7 +24,7 @@ import (
 // initData, and the bot token never exchanges an OIDC code.
 //
 // Verification follows the Telegram WebApp validation contract, as already
-// implemented by the WendingAI shop (dujiao-wending
+// implemented by the 稳定AI shop (dujiao-wending
 // internal/modules/identity/telegramauth/application/service.go,
 // VerifyMiniAppInitData):
 //   - data_check_string is every initData field except "hash", sorted by key,
