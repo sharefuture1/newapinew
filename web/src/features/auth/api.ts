@@ -242,6 +242,19 @@ export async function telegramLogin(
   return res.data
 }
 
+// Telegram Mini App login with the signed initData payload. Unlike the
+// OIDC flow, this verifies with the bot token and may auto-create the user.
+export async function telegramMiniAppLogin(
+  initData: string
+): Promise<LoginResponse> {
+  const res = await api.post<LoginResponse>(
+    '/api/oauth/telegram/miniapp/login',
+    { init_data: initData },
+    { skipAuthRefresh: true, skipBusinessError: true, skipErrorHandler: true }
+  )
+  return res.data
+}
+
 // ----------------------------------------------------------------------------
 // Registration
 // ----------------------------------------------------------------------------
