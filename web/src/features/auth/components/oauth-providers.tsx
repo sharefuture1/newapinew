@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
 import { useOAuthLogin } from '../hooks/use-oauth-login'
+import { isTelegramMiniAppEnvironment } from '../lib/telegram-mini-app'
 import type { SystemStatus } from '../types'
 
 type OAuthProvidersProps = {
@@ -121,7 +122,9 @@ export function OAuthProviders({
     })
   }
 
-  if (status?.telegram_oauth) {
+  // Inside a Telegram Mini App the OIDC redirect is replaced by the
+  // automatic Mini App login on the sign-in page.
+  if (status?.telegram_oauth && !isTelegramMiniAppEnvironment()) {
     providerButtons.push({
       key: 'telegram',
       label: t('Continue with Telegram'),

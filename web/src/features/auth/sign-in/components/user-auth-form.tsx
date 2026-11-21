@@ -44,6 +44,7 @@ import { LegalConsent } from '@/features/auth/components/legal-consent'
 import { OAuthProviders } from '@/features/auth/components/oauth-providers'
 import { loginFormSchema } from '@/features/auth/constants'
 import { useAuthRedirect } from '@/features/auth/hooks/use-auth-redirect'
+import { useTelegramMiniAppLogin } from '@/features/auth/hooks/use-telegram-mini-app-login'
 import { useTurnstile } from '@/features/auth/hooks/use-turnstile'
 import { beginPasskeyLogin, finishPasskeyLogin } from '@/features/auth/passkey'
 import {
@@ -103,6 +104,8 @@ export function UserAuthForm({
     validateTurnstile,
   } = useTurnstile()
   const { handleLoginResult } = useAuthRedirect()
+  const { isMiniApp, isAttemptingMiniAppLogin } =
+    useTelegramMiniAppLogin(redirectTo)
 
   const hasUserAgreement = Boolean(status?.user_agreement_enabled)
   const hasPrivacyPolicy = Boolean(status?.privacy_policy_enabled)
@@ -349,6 +352,21 @@ export function UserAuthForm({
         className={cn('grid gap-4', className)}
         {...props}
       >
+        {isMiniApp && (
+          <div className='flex items-center justify-center gap-2 text-sm text-muted-foreground'>
+            {isAttemptingMiniAppLogin ? (
+              <>
+                <Loader2 className='h-4 w-4 animate-spin' />
+                {t('Signing you in with Telegram…')}
+              </>
+            ) : (
+              t(
+                'You opened this page in Telegram. If automatic sign-in did not work, sign in below.'
+              )
+            )}
+          </div>
+        )}
+
         {hasAlternativeLogin && alternativeLoginMethods}
 
         {passwordLoginEnabled && (
