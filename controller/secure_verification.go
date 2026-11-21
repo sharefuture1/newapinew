@@ -73,6 +73,12 @@ func writeSecurityOperationError(c *gin.Context, err error) {
 		code, message = "TELEGRAM_OAUTH_FAILED", oauth.ErrTelegramOAuthFailed.Error()
 	case errors.Is(err, oauth.ErrTelegramAccountNotBound):
 		code, message = "TELEGRAM_ACCOUNT_NOT_BOUND", oauth.ErrTelegramAccountNotBound.Error()
+	case errors.Is(err, oauth.ErrTelegramMiniAppNotConfigured):
+		code, message = "TELEGRAM_MINIAPP_NOT_CONFIGURED", oauth.ErrTelegramMiniAppNotConfigured.Error()
+	case errors.Is(err, oauth.ErrTelegramMiniAppExpired):
+		code, message = "TELEGRAM_MINIAPP_EXPIRED", oauth.ErrTelegramMiniAppExpired.Error()
+	case errors.Is(err, oauth.ErrTelegramMiniAppFailed):
+		code, message = "TELEGRAM_MINIAPP_FAILED", oauth.ErrTelegramMiniAppFailed.Error()
 	case errors.Is(err, model.ErrExternalIdentityAlreadyClaimed):
 		code, message = "ACCOUNT_ALREADY_BOUND", "This external account is already bound."
 		if c.Param("provider") == "telegram" {
