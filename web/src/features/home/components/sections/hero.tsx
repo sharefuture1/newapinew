@@ -120,7 +120,7 @@ export function Hero(props: HeroProps) {
                 }
               >
                 <ShoppingBag className='size-4' aria-hidden='true' />
-                {t('WendingAI Shop')}
+                {t('稳定AI Shop')}
               </Button>
             </div>
             <Link

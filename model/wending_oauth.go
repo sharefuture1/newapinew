@@ -1,6 +1,6 @@
 package model
 
-// Wending OAuth: first-party OAuth 2.0 authorization server ("问鼎AI账号一键授权").
+// Wending OAuth: first-party OAuth 2.0 authorization server ("稳定AI账号一键授权").
 // A registered client (product) asks a logged-in user for consent; on approval
 // the user gets a dedicated API token (a normal tokens row, so billing, quota
 // and limits behave exactly like any other key) that is handed to the client
@@ -55,7 +55,7 @@ type WendingOAuthClient struct {
 	HomepageUrl      string `json:"homepage_url" gorm:"type:varchar(1024)"`
 	// LaunchUrl is the app URL opened from the console sidebar (RP initiates OAuth/PKCE there).
 	LaunchUrl string `json:"launch_url" gorm:"type:varchar(1024)"`
-	// ShowInSidebar lists the app under "问鼎应用" for logged-in users when LaunchUrl is set.
+	// ShowInSidebar lists the app under "稳定应用" for logged-in users when LaunchUrl is set.
 	ShowInSidebar bool `json:"show_in_sidebar"`
 	// SidebarOrder sorts sidebar apps ascending (ties broken by id ascending).
 	SidebarOrder int `json:"sidebar_order"`

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// WendingAI: the mapped upstream model of a task is root-only.
+// 稳定AI: the mapped upstream model of a task is root-only.
 func TestTaskDTOUpstreamModelNameIsRootOnly(t *testing.T) {
 	task := &model.Task{
 		TaskID: "task_trace",

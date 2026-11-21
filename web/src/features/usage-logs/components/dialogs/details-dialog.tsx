@@ -1142,7 +1142,7 @@ export function DetailsDialog(props: DetailsDialogProps) {
           />
         )}
 
-        {/* WendingAI: model routing diagnostics are root-only. */}
+        {/* 稳定AI: model routing diagnostics are root-only. */}
         {props.isRoot && other?.response_model && (
           <DetailSection label={t('Response Model')}>
             <ResponseModelDetails observation={other.response_model} />

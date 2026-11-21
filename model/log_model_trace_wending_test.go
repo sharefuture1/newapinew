@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// WendingAI: model-routing diagnostics (mapped upstream model and the model
+// 稳定AI: model-routing diagnostics (mapped upstream model and the model
 // name the upstream returned) are visible to root only.
 func TestModelTraceLogOtherIsRootOnly(t *testing.T) {
 	other := common.MapToJsonStr(map[string]any{

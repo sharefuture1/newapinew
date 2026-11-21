@@ -1,4 +1,4 @@
-# WendingAI
+# 稳定AI
 User-agent: *
 Allow: /$
 Allow: /pricing
