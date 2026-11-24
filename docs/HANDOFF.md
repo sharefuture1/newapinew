@@ -1,6 +1,6 @@
 # HANDOFF – 稳定点AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-24 04:09 EST – production = `wending` ac561b8 (PR #15, 稳定点AI) on api.wending.ai and wendingai.future1.us. DB options already 稳定点AI · wending.ai (backup `/root/brand-backup-20261124-0355ET`). api5.wending.ai routing was left unchanged._
+_Last updated: 2026-11-24 04:17 EST – production = `wending` ac561b8 (PR #15, 稳定点AI) on api.wending.ai, wendingai.future1.us, and go.wending.ai (dpl_5dUixYK8y7RutDWyQqn4m5qsN9Bd). DB options already 稳定点AI · wending.ai. api5.wending.ai routing was left unchanged._
 
 ## This stage — 2026-11-24: display brand 稳定AI → 稳定点AI (branch `rebrand/wendingdian-ai-2026-11-24`)
 
@@ -10,6 +10,14 @@ _Last updated: 2026-11-24 04:09 EST – production = `wending` ac561b8 (PR #15, 
 - Production binary, version string, sha256, backup path and live checks: filled in after deploy (see the production record that follows this section once the install is done).
 - Rollback of the upcoming binary: reinstall the pre-deploy `.bak` and `systemctl restart new-api`. DB option rollback is the csv/dump in `/root/brand-backup-20261124-0355ET/` (not needed for a binary-only rollback).
 
+## Production deployment record — 2026-11-24 04:15–04:17 EST (go.wending.ai, same ac561b8)
+
+- go.wending.ai is the Vercel project `wending-go` (`prj_0XHZGNfKYZP8zUc1KM6wMBeUrN5t`, team `sharefuture1s-projects`). DNS is a DNS-only CNAME to `cname.vercel-dns.com`. The frontend is the `web/` tree of `sharefuture1/newapinew` branch `wending`; API calls are same-origin proxied to `https://api.wending.ai`. Caddy on vultr-sv was not changed; api5.wending.ai routing was not changed.
+- Previous production: **dpl_GCaVwXPVKwp1RQgsaZ42GQRaUU2S** (`wending` fa32c8e, still titled WendingAI). A first `create_deployment` of tip `6d9f2017a` (docs-only) was canceled by the project's Ignored Build Step (`git diff --quiet HEAD^ HEAD -- .` under root `web/`).
+- Production deploy: **dpl_5dUixYK8y7RutDWyQqn4m5qsN9Bd** from `wending` **ac561b866** (PR #15), `target: production`, READY 2026-11-24 04:17:11 AM EST. URL `wending-nv8wh5fod-sharefuture1s-projects.vercel.app`; alias includes `go.wending.ai`. Inspector: https://vercel.com/sharefuture1s-projects/wending-go/5dUixYK8y7RutDWyQqn4m5qsN9Bd
+- Verified live https://go.wending.ai/: title `稳定点AI · 企业级 AI 大模型 API 平台` (11× 稳定点AI in HTML), robots.txt `# 稳定点AI`, index `index.b49c88a568.js` (6× 稳定点AI), `/api/status` via the same-origin proxy returns `v1.0.0-rc.45-wending-ac561b8` and `system_name` `稳定点AI · wending.ai`. 0 问鼎, 0 leftover 稳定AI. Screenshots: `/workspace/rebrand-shots/go-1280.png`, `go-390.png`.
+- Rollback: promote **dpl_GCaVwXPVKwp1RQgsaZ42GQRaUU2S** on project `wending-go` (or Vercel dashboard rollback). That would restore the pre-rebrand WendingAI frontend.
+
 ## Production deployment record — 2026-11-24 04:09 EST (PR #15 稳定点AI frontend, ac561b8)
 
 - PR #15 (`rebrand/wendingdian-ai-2026-11-24` → **ac561b8**, sharefuture1). Replaces hard-coded 稳定AI UI/SEO/shop/OAuth copy with 稳定点AI; sidebar group 稳定应用 → 稳定点应用. DB options were already live from 2026-11-24 03:55 EST (no restart then).
@@ -18,7 +26,7 @@ _Last updated: 2026-11-24 04:09 EST – production = `wending` ac561b8 (PR #15, 
 - Deploy 2026-11-24 04:09:37–04:09:45 EST on vultr-sv: backup `/opt/new-api/new-api.bak-20261124-040937ET` (previous `v1.0.0-rc.45-wending-1ac9f5a`, sha256 `70b686ba049035ab1df968a57c0522e9f30435060152878dd6da1b9f1493d70e`; also linked as `new-api.bak-pre-ac561b8`). `install -m 0755`, `systemctl restart new-api`, local `/api/status` 200 after ~3 s (`ready in 2949 ms`). Caddy / api5.wending.ai routing not changed. Same process serves api5, so that host also got the new binary.
 - Verified api.wending.ai and wendingai.future1.us: home title/meta 稳定点AI (11), robots.txt `# 稳定点AI`, `/api/status` version `v1.0.0-rc.45-wending-ac561b8` and `system_name` `稳定点AI · wending.ai`, index bundle `index.b49c88a568.js` plus OAuth async chunks — 0 问鼎, 0 leftover 稳定AI. Screenshots: `/workspace/rebrand-shots/api-wending-1280.png`, `api-wending-390.png`, `future1-1280.png`, `future1-390.png`.
 - Rollback: `install -m 0755 /opt/new-api/new-api.bak-20261124-040937ET /opt/new-api/new-api && systemctl restart new-api`.
-- Left for later: go.wending.ai was not redeployed (still the previous Vercel frontend if it is served separately); `Notice` still says “wendingAI · 服务公告”; OAuth client *names* such as “WendingAI 创作台” were not renamed (only the huabu description had 问鼎AI, already updated).
+- Left after the binary deploy (go.wending.ai was updated later the same morning, see the record below): `Notice` still says “wendingAI · 服务公告”; OAuth client *names* such as “WendingAI 创作台” were not renamed.
 
 ## Production deployment record — 2026-11-19 21:28–21:48 UTC (PR #8 remove landing shell, logo/name options, fa32c8e)
 
