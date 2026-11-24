@@ -1,6 +1,6 @@
 # HANDOFF – 稳定点AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-24 04:01 EST – display brand 稳定AI → 稳定点AI; production still `wending` 1ac9f5a until the new binary is installed. DB options already show 稳定点AI · wending.ai (2026-11-24 03:55 EST backup `/root/brand-backup-20261124-0355ET`). api5.wending.ai routing was left unchanged._
+_Last updated: 2026-11-24 04:09 EST – production = `wending` ac561b8 (PR #15, 稳定点AI) on api.wending.ai and wendingai.future1.us. DB options already 稳定点AI · wending.ai (backup `/root/brand-backup-20261124-0355ET`). api5.wending.ai routing was left unchanged._
 
 ## This stage — 2026-11-24: display brand 稳定AI → 稳定点AI (branch `rebrand/wendingdian-ai-2026-11-24`)
 
@@ -9,6 +9,16 @@ _Last updated: 2026-11-24 04:01 EST – display brand 稳定AI → 稳定点AI; 
 - **api5.wending.ai**: Caddy block, DNS and routing were not changed. If it still proxies the same new-api process it will pick up the new binary automatically.
 - Production binary, version string, sha256, backup path and live checks: filled in after deploy (see the production record that follows this section once the install is done).
 - Rollback of the upcoming binary: reinstall the pre-deploy `.bak` and `systemctl restart new-api`. DB option rollback is the csv/dump in `/root/brand-backup-20261124-0355ET/` (not needed for a binary-only rollback).
+
+## Production deployment record — 2026-11-24 04:09 EST (PR #15 稳定点AI frontend, ac561b8)
+
+- PR #15 (`rebrand/wendingdian-ai-2026-11-24` → **ac561b8**, sharefuture1). Replaces hard-coded 稳定AI UI/SEO/shop/OAuth copy with 稳定点AI; sidebar group 稳定应用 → 稳定点应用. DB options were already live from 2026-11-24 03:55 EST (no restart then).
+- Checks: `bunx tsgo -b` pass; `cd web && bun run test` 207 files / 2401 tests pass; `bun run build` pass (dist has 53× 稳定点AI, 0 leftover 稳定AI, 0 问鼎). `go vet ./controller ./model ./middleware ./router ./service ./common ./oauth` pass; `go test` of those packages pass except a pre-existing `router` failure (`TestAccessTokenRouteRulesCoverEveryDashboardRoute` wants `POST /api/oauth/telegram/miniapp/login` declared once) — not touched by this PR.
+- Binary **`v1.0.0-rc.45-wending-ac561b8`**, sha256 `d00d4f68c1b75b7a0ce9d3f75cce8c75cbe36a17417b6a69e1157ead05c9a799` (CGO_ENABLED=0, `-s -w`, go1.27.3, `bun run build`). Built on the box, staged as `/opt/new-api/new-api.staged-ac561b8`.
+- Deploy 2026-11-24 04:09:37–04:09:45 EST on vultr-sv: backup `/opt/new-api/new-api.bak-20261124-040937ET` (previous `v1.0.0-rc.45-wending-1ac9f5a`, sha256 `70b686ba049035ab1df968a57c0522e9f30435060152878dd6da1b9f1493d70e`; also linked as `new-api.bak-pre-ac561b8`). `install -m 0755`, `systemctl restart new-api`, local `/api/status` 200 after ~3 s (`ready in 2949 ms`). Caddy / api5.wending.ai routing not changed. Same process serves api5, so that host also got the new binary.
+- Verified api.wending.ai and wendingai.future1.us: home title/meta 稳定点AI (11), robots.txt `# 稳定点AI`, `/api/status` version `v1.0.0-rc.45-wending-ac561b8` and `system_name` `稳定点AI · wending.ai`, index bundle `index.b49c88a568.js` plus OAuth async chunks — 0 问鼎, 0 leftover 稳定AI. Screenshots: `/workspace/rebrand-shots/api-wending-1280.png`, `api-wending-390.png`, `future1-1280.png`, `future1-390.png`.
+- Rollback: `install -m 0755 /opt/new-api/new-api.bak-20261124-040937ET /opt/new-api/new-api && systemctl restart new-api`.
+- Left for later: go.wending.ai was not redeployed (still the previous Vercel frontend if it is served separately); `Notice` still says “wendingAI · 服务公告”; OAuth client *names* such as “WendingAI 创作台” were not renamed (only the huabu description had 问鼎AI, already updated).
 
 ## Production deployment record — 2026-11-19 21:28–21:48 UTC (PR #8 remove landing shell, logo/name options, fa32c8e)
 
