@@ -1,12 +1,12 @@
 # HANDOFF – 稳定点AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-24 04:17 EST – production = `wending` ac561b8 (PR #15, 稳定点AI) on api.wending.ai, wendingai.future1.us, and go.wending.ai (dpl_5dUixYK8y7RutDWyQqn4m5qsN9Bd). DB options already 稳定点AI · wending.ai. api5.wending.ai routing was left unchanged._
+_Last updated: 2026-11-24 05:15 EST – production = `wending` 3cbc840 (PR #16, frontend perf) on api.wending.ai, wendingai.future1.us, and go.wending.ai (dpl_GHYfvhJY5F57MG4d9zSzETR3Ys84, index.7ae97a00d4.js). Brand 稳定点AI · wending.ai. api5.wending.ai Caddy routing was left unchanged. wending-go is Git-linked to sharefuture1/newapinew, Production Branch `wending`._
 
 ## Dual frontend release process
 
 Two surfaces serve the same `web/` app and can drift if they are not released together:
 
-- **go.wending.ai** — Vercel project `wending-go` (`prj_0XHZGNfKYZP8zUc1KM6wMBeUrN5t`, team `sharefuture1s-projects`), root directory `web/`. Once the project is Git-linked to `sharefuture1/newapinew` with Production Branch = `wending`, pushes that touch `web/` auto-deploy. The Ignored Build Step skips branch `main` and skips a commit when `git diff --quiet HEAD^ HEAD -- .` (under `web/`) is silent, so a docs-only tip does not rebuild. A merge commit vs first parent includes the PR's `web/` changes and will build.
+- **go.wending.ai** — Vercel project `wending-go` (`prj_0XHZGNfKYZP8zUc1KM6wMBeUrN5t`, team `sharefuture1s-projects`), root directory `web/`. Git-linked to `sharefuture1/newapinew` (dashboard, 2026-11-24 ~05:15 EST) with Production Branch = `wending`. Pushes that touch `web/` auto-deploy. The Ignored Build Step skips branch `main` and skips a commit when `git diff --quiet HEAD^ HEAD -- .` (under `web/`) is silent, so a docs-only tip does not rebuild. A merge commit vs first parent includes the PR's `web/` changes and will build.
 - **api.wending.ai** and **wendingai.future1.us** — the Go binary on vultr-sv (`//go:embed web/dist`). This does **not** follow Git. Ship it as an explicit release: `cd web && bun install --frozen-lockfile && bun run build`, then `CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/QuantumNous/new-api/common.Version=v1.0.0-rc.45-wending-<7-char-sha>"`, backup `/opt/new-api/new-api`, install, `systemctl restart new-api`. Do not change the api5.wending.ai Caddy block as part of a frontend release.
 - After both are out, confirm they serve the same bundle: `scripts/compare-frontend-hash.sh`. A mismatch means go moved ahead of the binary (or the other way around).
 - Rollback: Vercel — promote the previous production deployment of `wending-go`. Binary — reinstall the pre-deploy `.bak` and `systemctl restart new-api`.
@@ -18,7 +18,27 @@ Two surfaces serve the same `web/` app and can drift if they are not released to
 - Preload `/logo.png` for LCP. On Vercel, long-cache `/logo.png` / favicons / `og-image.jpg` (`max-age=604800`, SWR 86400). Hashed `/static/*` stays `immutable`.
 - vultr-sv Caddy (api.wending.ai and wendingai.future1.us only): `encode zstd gzip` (Caddy 2.6.2 has gzip+zstd, no brotli). `header_up -Accept-Encoding` so Caddy — not the Go gzip cache — chooses the encoding. HTML stays `no-cache`; `/logo.png` stays the short `max-age=604800`. The api5.wending.ai Caddy block was not changed; `unhealthy_status` lines were not changed. Backup: `/etc/caddy/Caddyfile.bak-20261124-0452ET`.
 - Immutable cache for hashed `/static/*` is set in `middleware/cache.go` (`public, max-age=31536000, immutable`). It takes effect when this binary is installed (api5 served by the same process will also get the header; its Caddy block is untouched).
-- Production record, before/after sizes, and Lighthouse: filled in after deploy.
+- Production record, before/after sizes, and Lighthouse: see the 2026-11-24 05:07–05:15 EST records below.
+- Git link (dashboard, ~05:15 EST): repo `sharefuture1/newapinew`, Production Branch `wending`, root `web/`, Ignored Build Step unchanged. The 3cbc840 production deploy itself was still a manual `create_deployment` because the link was not in place at 05:07.
+
+## Production deployment record — 2026-11-24 05:15 EST (wending-go Git link)
+
+- Vercel project `wending-go` was Git-linked via the dashboard to `sharefuture1/newapinew`. Production Branch = `wending`, Root Directory = `web`, Ignored Build Step unchanged (`if [ "$VERCEL_GIT_COMMIT_REF" = "main" ]; then exit 0; fi; git diff --quiet HEAD^ HEAD -- .`).
+- Production at link time remained **dpl_GHYfvhJY5F57MG4d9zSzETR3Ys84** (3cbc840). No settings other than the Git connection were changed in this step.
+- After the link, a docs-only push to `wending` should create a Git-triggered deployment that the Ignored Build Step cancels (no `web/` diff vs `HEAD^`). That is the webhook proof; it must not replace production.
+
+## Production deployment record — 2026-11-24 05:07–05:08 EST (PR #16 frontend perf, 3cbc840)
+
+- PR #16 (`perf/frontend-2026-11-24` → merge **3cbc8401a**, sharefuture1) merged 05:06:45 AM EST. Lazy-loads all interface locales (including en + zhCN), Telegram-only `telegram-web-app.js`, `/logo.png` preload + Vercel long-cache for unhashed brand assets, `middleware/cache.go` immutable cache on hashed `/static/*`, dual-release docs and `scripts/compare-frontend-hash.sh`.
+- Checks before merge: `cd web && bun run test` 207 files / 2401 tests pass; `bun run build` pass (new index `index.7ae97a00d4.js`); `go test ./middleware` pass. Headless smoke on go and api: `/`, `/sign-in`, `/pricing`, `/about` render 稳定点AI; unauthenticated `/dashboard` is the sign-in page.
+- Bundle (raw / brotli q11): entry index **2,056,688 / 530,017 br** (`index.b49c88a568.js`) → **1,049,750 / 215,906 br** (`index.7ae97a00d4.js`). One locale loads on first paint (e.g. zh `3161.f6058fd5bc.js` 493,980 / 128,042 br). Chunk `82646` unchanged (732,464 raw). Net ~0.5 MB raw less than shipping both locale tables in the entry.
+- Lighthouse from the box in Hanoi (not US), desktop+mobile, same method as the morning baseline. go mobile 55→56, FCP 11.0s→9.7s, LCP 11.7s→10.3s, transfer 1,223→1,046 KiB. api mobile 56, FCP 11.0s→10.2s, LCP 11.6s→10.8s, 1,266→1,084 KiB. go desktop 37→48, FCP 3.3s→1.1s, LCP 9.3s→6.5s. api desktop 36→48, FCP 4.9s→1.5s, LCP 11.8s→6.9s. a11y/BP/SEO 100. Screenshots: `/workspace/perf-shots/{api,future1,go}-{1280,390}.png`.
+- Caddy on vultr-sv (api.wending.ai and wendingai.future1.us only): `encode zstd gzip` (no brotli module), `header_up -Accept-Encoding`. api5.wending.ai Caddy block and `unhealthy_status` lines not changed. Backup `/etc/caddy/Caddyfile.bak-20261124-0452ET`. Immutable `/static/*` headers come from the new binary (`middleware/cache.go`); the same process therefore also serves them on api5. HTML `no-cache`; logo `max-age=604800`.
+- Binary **`v1.0.0-rc.45-wending-3cbc840`**, sha256 `a0526bf0e8282b7149e2e2a459f7554e083b3d99754f9fd58b4eaf61132486d3` (CGO_ENABLED=0, `-s -w`, go1.27.3, `bun run build`). Staged `/opt/new-api/new-api.staged-3cbc840`. Deploy 2026-11-24 05:07–05:08 EST on vultr-sv: backup `/opt/new-api/new-api.bak-20261124-0507ET` (previous `v1.0.0-rc.45-wending-ac561b8`, sha256 `d00d4f68c1b75b7a0ce9d3f75cce8c75cbe36a17417b6a69e1157ead05c9a799`; also linked as `new-api.bak-pre-3cbc840`). `install -m 0755`, `systemctl restart new-api`, local `/api/status` 200 after ~4 s.
+- go.wending.ai was not Git-linked yet, so there was no auto-deploy after the merge. Manual `create_deployment`: **dpl_GHYfvhJY5F57MG4d9zSzETR3Ys84** from `wending` **3cbc8401a**, `target: production`, created 05:07:25 AM EST, READY 05:08:31 AM EST. Alias includes `go.wending.ai`. Inspector: https://vercel.com/sharefuture1s-projects/wending-go/GHYfvhJY5F57MG4d9zSzETR3Ys84. Previous production: **dpl_5dUixYK8y7RutDWyQqn4m5qsN9Bd** (ac561b8).
+- Verified api.wending.ai, wendingai.future1.us, and go.wending.ai: title `稳定点AI · 企业级 AI 大模型 API 平台`, index `index.7ae97a00d4.js` on all three (`scripts/compare-frontend-hash.sh` OK), `/api/status` version `v1.0.0-rc.45-wending-3cbc840` and `system_name` `稳定点AI · wending.ai`. `/static/*` is zstd + immutable on api/future1, gzip + immutable on api5 (Caddy block unchanged; header comes from the binary). Vercel logo `max-age=604800, stale-while-revalidate=86400`. 0 问鼎, 0 leftover 稳定AI.
+- Rollback: binary `install -m 0755 /opt/new-api/new-api.bak-20261124-0507ET /opt/new-api/new-api && systemctl restart new-api`. go: promote **dpl_5dUixYK8y7RutDWyQqn4m5qsN9Bd**. Caddy: restore `/etc/caddy/Caddyfile.bak-20261124-0452ET`, `caddy validate`, `systemctl restart caddy`.
+
 
 ## This stage — 2026-11-24: display brand 稳定AI → 稳定点AI (branch `rebrand/wendingdian-ai-2026-11-24`)
 
