@@ -16,26 +16,27 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-// Modified by WendingAI (2026-11): only English (fallback) and Simplified
-// Chinese (default market) are bundled into the entry chunk; the other
-// interface languages are fetched as separate chunks the first time they are
-// used, which keeps ~3 MB of JSON out of the initial download.
+// Modified by WendingAI (2026-11): every interface language — including
+// English and Simplified Chinese — is fetched as its own chunk. The first
+// perf pass left en+zhCN in the entry (~1.1 MB raw of translation tables).
+// main.tsx already waits on i18nReady before the first render, so only the
+// detected language is downloaded, and the entry chunk no longer embeds
+// console/admin copy the landing page does not need yet.
 import i18n, { type BackendModule, type ResourceKey } from 'i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { initReactI18next } from 'react-i18next'
 
 import { convertDetectedLanguage } from './languages'
-import en from './locales/en.json'
-import zhCN from './locales/zh.json'
 
-export const resources = {
-  en,
-  zhCN,
-} as const
+// Kept as an empty table so existing imports and tests can tell that no
+// locale JSON is eager-bundled into the entry.
+export const resources = {} as const
 
 type LocaleModule = { default: Record<string, ResourceKey> }
 
 export const lazyLocaleLoaders: Record<string, () => Promise<LocaleModule>> = {
+  en: () => import('./locales/en.json'),
+  zhCN: () => import('./locales/zh.json'),
   fr: () => import('./locales/fr.json'),
   ru: () => import('./locales/ru.json'),
   ja: () => import('./locales/ja.json'),
@@ -49,7 +50,7 @@ export const lazyLocaleBackend: BackendModule = {
   read(language, namespace, callback) {
     const load = lazyLocaleLoaders[language]
     if (!load) {
-      // Bundled languages (or unknown codes) have nothing to fetch.
+      // Unknown codes have nothing to fetch; supported languages all have loaders.
       callback(null, {})
       return
     }
@@ -73,7 +74,9 @@ export const i18nReady = i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    resources,
+    // Use a fresh object. i18next mutates `resources` as bundles load, so
+    // the exported empty table must not be the same reference.
+    resources: {},
     partialBundledLanguages: true,
     fallbackLng: 'en',
     supportedLngs: ['en', 'zhCN', 'fr', 'ru', 'ja', 'vi', 'zhTW'],

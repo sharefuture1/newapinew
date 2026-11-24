@@ -2,6 +2,24 @@
 
 _Last updated: 2026-11-24 04:17 EST – production = `wending` ac561b8 (PR #15, 稳定点AI) on api.wending.ai, wendingai.future1.us, and go.wending.ai (dpl_5dUixYK8y7RutDWyQqn4m5qsN9Bd). DB options already 稳定点AI · wending.ai. api5.wending.ai routing was left unchanged._
 
+## Dual frontend release process
+
+Two surfaces serve the same `web/` app and can drift if they are not released together:
+
+- **go.wending.ai** — Vercel project `wending-go` (`prj_0XHZGNfKYZP8zUc1KM6wMBeUrN5t`, team `sharefuture1s-projects`), root directory `web/`. Once the project is Git-linked to `sharefuture1/newapinew` with Production Branch = `wending`, pushes that touch `web/` auto-deploy. The Ignored Build Step skips branch `main` and skips a commit when `git diff --quiet HEAD^ HEAD -- .` (under `web/`) is silent, so a docs-only tip does not rebuild. A merge commit vs first parent includes the PR's `web/` changes and will build.
+- **api.wending.ai** and **wendingai.future1.us** — the Go binary on vultr-sv (`//go:embed web/dist`). This does **not** follow Git. Ship it as an explicit release: `cd web && bun install --frozen-lockfile && bun run build`, then `CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/QuantumNous/new-api/common.Version=v1.0.0-rc.45-wending-<7-char-sha>"`, backup `/opt/new-api/new-api`, install, `systemctl restart new-api`. Do not change the api5.wending.ai Caddy block as part of a frontend release.
+- After both are out, confirm they serve the same bundle: `scripts/compare-frontend-hash.sh`. A mismatch means go moved ahead of the binary (or the other way around).
+- Rollback: Vercel — promote the previous production deployment of `wending-go`. Binary — reinstall the pre-deploy `.bak` and `systemctl restart new-api`.
+
+## This stage — 2026-11-24: frontend perf (branch `perf/frontend-2026-11-24`)
+
+- Cut initial JS by lazily loading **all** interface locales (including en + zhCN, previously eager in the entry, ~1.1 MB raw). Route-level splitting was already on in production; chunk `82646` is the used `lucide-react` set (~248 icons, ~732 KB raw) shared by the public shell — not a failed tree-shake of the whole pack, and not `@lobehub/icons` (those are already async; some icon context chunks are 2–6.8 MB and load only when a page asks for an icon).
+- Load `telegram-web-app.js` only inside Telegram (synchronous `document.write` when `tgWebApp*` params or a Telegram UA are present). The fallback in `web/src/features/auth/lib/telegram-mini-app.ts` is unchanged.
+- Preload `/logo.png` for LCP. On Vercel, long-cache `/logo.png` / favicons / `og-image.jpg` (`max-age=604800`, SWR 86400). Hashed `/static/*` stays `immutable`.
+- vultr-sv Caddy (api.wending.ai and wendingai.future1.us only): `encode zstd gzip` (Caddy 2.6.2 has gzip+zstd, no brotli). `header_up -Accept-Encoding` so Caddy — not the Go gzip cache — chooses the encoding. HTML stays `no-cache`; `/logo.png` stays the short `max-age=604800`. The api5.wending.ai Caddy block was not changed; `unhealthy_status` lines were not changed. Backup: `/etc/caddy/Caddyfile.bak-20261124-0452ET`.
+- Immutable cache for hashed `/static/*` is set in `middleware/cache.go` (`public, max-age=31536000, immutable`). It takes effect when this binary is installed (api5 served by the same process will also get the header; its Caddy block is untouched).
+- Production record, before/after sizes, and Lighthouse: filled in after deploy.
+
 ## This stage — 2026-11-24: display brand 稳定AI → 稳定点AI (branch `rebrand/wendingdian-ai-2026-11-24`)
 
 - Follows production `wending` **1ac9f5a** (PR #14, the 稳定AI frontend rebrand). Hard-coded UI copy, SEO/OG/Twitter meta, `robots.txt`, default system name, shop labels, and OAuth strings (`稳定AI账号一键授权`, `使用稳定AI账号登录`, sidebar group `稳定应用` → `稳定点应用`) now say **稳定点AI**. i18n programmatic keys and code identifiers were not renamed; source-string keys such as `稳定点AI Shop` were updated together with `t(...)` callers.

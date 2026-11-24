@@ -33,6 +33,13 @@
       "continue": true
     },
     {
+      "src": "^/(logo\\.png|favicon\\.ico|favicon\\.svg|apple-touch-icon\\.png|og-image\\.jpg)$",
+      "headers": {
+        "cache-control": "public, max-age=604800, stale-while-revalidate=86400"
+      },
+      "continue": true
+    },
+    {
       "handle": "filesystem"
     },
     {

@@ -37,29 +37,30 @@ function read(language: string) {
 }
 
 describe('lazy interface languages', () => {
-  it('bundles only English and Simplified Chinese', () => {
-    expect(Object.keys(resources).sort()).toEqual(['en', 'zhCN'])
+  it('does not eagerly bundle any locale table into the entry', () => {
+    expect(resources).toEqual({})
   })
 
-  it('has a loader for every other interface language', () => {
-    const lazy = INTERFACE_LANGUAGE_OPTIONS.map((l) => l.code).filter(
-      (code) => !(code in resources)
+  it('has a loader for every interface language, including en and zhCN', () => {
+    expect(Object.keys(lazyLocaleLoaders).sort()).toEqual(
+      [...INTERFACE_LANGUAGE_OPTIONS.map((l) => l.code)].sort()
     )
-    expect(Object.keys(lazyLocaleLoaders).sort()).toEqual([...lazy].sort())
   })
 
-  it('loads a lazy language on demand and switches to it', async () => {
+  it('loads a language on demand and switches to it', async () => {
     await i18nReady
+    const zh = await read('zhCN')
+    expect(Object.keys(zh).length).toBeGreaterThan(1000)
+    expect(zh['Sign in']).toBe('登录')
+
     const fr = await read('fr')
     expect(Object.keys(fr).length).toBeGreaterThan(1000)
-    expect(await read('en')).toEqual({})
 
     await i18n.changeLanguage('fr')
     expect(i18n.hasResourceBundle('fr', 'translation')).toBe(true)
     expect(i18n.t('Sign in')).not.toBe('Sign in')
-    // test-setup re-initialises the shared instance for component tests, so
-    // check the bundled Chinese table directly.
-    expect(resources.zhCN.translation['Sign in']).toBe('登录')
+    await i18n.changeLanguage('zhCN')
+    expect(i18n.t('Sign in')).toBe('登录')
     await i18n.changeLanguage('en')
   })
 })
