@@ -47,8 +47,9 @@ afterEach(() => {
 
 describe('Telegram Mini App initData survives SPA navigation', () => {
   test('initData still holds after tgWebAppData is stripped from the URL', () => {
-    // Landing in Telegram: the static telegram-web-app.js tag in index.html
-    // parses tgWebAppData from the URL at page load and stores initData on
+    // Landing in Telegram: index.html injects telegram-web-app.js
+    // synchronously when tgWebApp* params (or a Telegram UA) are present.
+    // The script parses tgWebAppData from the URL and stores initData on
     // window.Telegram.WebApp.
     setLocation('/?tgWebAppData=query_id%3D1&tgWebAppPlatform=android')
     setTelegramWebApp(INIT_DATA)
@@ -62,9 +63,9 @@ describe('Telegram Mini App initData survives SPA navigation', () => {
   })
 
   test('without a pre-loaded WebApp object, stripping the params loses the Mini App', () => {
-    // This is the bug the static script tag fixes: if the script was never
-    // loaded against the original URL, nothing holds initData once the
-    // params are gone.
+    // This is the bug the synchronous (Telegram-only) script tag fixes:
+    // if the script was never loaded against the original URL, nothing
+    // holds initData once the params are gone.
     setLocation('/?tgWebAppData=query_id%3D1&tgWebAppPlatform=android')
     expect(isTelegramMiniAppEnvironment()).toBe(true)
 

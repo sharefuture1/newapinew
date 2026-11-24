@@ -50,6 +50,12 @@
     <!-- Icons -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Preload the default mark so LCP is not blocked on CSS/JS discovery.
+         Keep the unhashed public path: the backend Logo option and existing
+         bookmarks still point at /logo.png. Vercel/Caddy cache headers are
+         set separately (hashed /static/* stays immutable; this file is
+         long-cached on Vercel and short-cached on the origin). -->
+    <link rel="preload" as="image" href="/logo.png" />
 
     <meta name="theme-color" content="#fff" />
     <!-- Resolve the theme before first paint so the page never flashes light
@@ -69,14 +75,28 @@
         document.documentElement.classList.add(theme)
       })()
     </script>
-    <!-- Telegram Mini App: load telegram-web-app.js synchronously on the
-         initial page load. The script reads tgWebAppData from the page URL
-         at load time and keeps initData in memory; the SPA strips those
-         params when navigating to /sign-in, so loading it later (or with
-         async/defer) leaves initData empty and Mini App auto-login never
-         fires. Keep the dynamic loader in telegram-mini-app.ts as a
-         fallback; it no-ops once window.Telegram.WebApp exists. -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Telegram Mini App: only fetch telegram-web-app.js inside Telegram.
+         In that environment the script must still run synchronously: it
+         reads tgWebAppData from the URL at load time and keeps initData
+         in memory; the SPA strips those params when navigating to
+         /sign-in, so a later async load would miss them. A normal
+         browser never downloads the script. The loader in
+         telegram-mini-app.ts stays as a fallback and no-ops once
+         window.Telegram.WebApp already exists. -->
+    <script>
+      ;(function () {
+        try {
+          var q = String(location.search || '') + String(location.hash || '')
+          var ua = String(navigator.userAgent || '')
+          var inTelegram =
+            /tgWebAppData|tgWebAppPlatform/.test(q) || /Telegram/i.test(ua)
+          if (!inTelegram) return
+          document.write(
+            '<script src="https://telegram.org/js/telegram-web-app.js"><\/script>'
+          )
+        } catch (e) {}
+      })()
+    </script>
     <!--umami-->
     <!--Google Analytics-->
   </head>
