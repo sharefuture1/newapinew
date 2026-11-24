@@ -24,10 +24,10 @@ const en = {
   nav: {
     authorizedApps: 'Authorized Apps',
     oauthClients: 'OAuth Apps',
-    apps: '稳定 Apps',
+    apps: '稳定点AI Apps',
   },
   oauth: {
-    brand: '稳定AI account authorization',
+    brand: '稳定点AI account authorization',
     requestTitle: '{{app}} wants to connect to your account',
     requestDesc:
       '{{app}} is requesting to use your quota. A dedicated API key will be created for it and every call it makes is billed to your balance.',
@@ -52,7 +52,7 @@ const en = {
       'This authorization link is invalid or the app is not registered. Please return to the app and try again.',
     redirectTo: 'You will be redirected to {{host}}',
     quotaRequired: 'Please enter a positive spending limit',
-    loginTitle: 'Sign in to {{app}} with your 稳定AI account',
+    loginTitle: 'Sign in to {{app}} with your 稳定点AI account',
     loginDesc:
       '{{app}} will only learn who you are. No API key is created and it cannot use your balance.',
     permLoginIdentity: 'Read your user ID, username and display name',
@@ -65,7 +65,7 @@ const en = {
   },
   grants: {
     title: 'Authorized Apps',
-    desc: 'Apps you have connected with your 稳定AI account. Revoking an app deletes its API key immediately.',
+    desc: 'Apps you have connected with your 稳定点AI account. Revoking an app deletes its API key immediately.',
     empty: 'You have not authorized any apps yet.',
     authorizedAt: 'Authorized {{time}}',
     lastUsed: 'Last connected {{time}}',
@@ -82,7 +82,7 @@ const en = {
   },
   clients: {
     title: 'OAuth Apps',
-    desc: 'Register first-party products that can request a user API key via "稳定AI account authorization".',
+    desc: 'Register first-party products that can request a user API key via "稳定点AI account authorization".',
     create: 'New app',
     fixedClientId:
       'Client ID (optional, create only; e.g. wd_wendingai_switch for desktop apps)',
@@ -134,10 +134,10 @@ const zhCN: typeof en = {
   nav: {
     authorizedApps: '已授权应用',
     oauthClients: '接入应用',
-    apps: '稳定应用',
+    apps: '稳定点应用',
   },
   oauth: {
-    brand: '稳定AI账号一键授权',
+    brand: '稳定点AI账号一键授权',
     requestTitle: '{{app}} 请求连接你的账号',
     requestDesc:
       '{{app}} 请求使用你的额度。授权后将为其创建一个专用 API 密钥，其所有调用均从你的余额中扣费。',
@@ -161,7 +161,7 @@ const zhCN: typeof en = {
     invalidRequestDesc: '授权链接无效或应用未注册，请返回应用重试。',
     redirectTo: '授权后将跳转到 {{host}}',
     quotaRequired: '请输入大于 0 的额度上限',
-    loginTitle: '使用稳定AI账号登录 {{app}}',
+    loginTitle: '使用稳定点AI账号登录 {{app}}',
     loginDesc: '{{app}} 只会获得你的身份信息，不会创建 API 密钥，也不能使用你的余额。',
     permLoginIdentity: '读取你的用户 ID、用户名和显示名',
     permLoginEmail: '读取你的邮箱地址',
@@ -173,7 +173,7 @@ const zhCN: typeof en = {
   },
   grants: {
     title: '已授权应用',
-    desc: '你使用稳定AI账号授权过的应用。撤销授权会立即删除对应的 API 密钥。',
+    desc: '你使用稳定点AI账号授权过的应用。撤销授权会立即删除对应的 API 密钥。',
     empty: '你还没有授权任何应用。',
     authorizedAt: '授权于 {{time}}',
     lastUsed: '最近连接 {{time}}',
@@ -189,7 +189,7 @@ const zhCN: typeof en = {
   },
   clients: {
     title: '接入应用',
-    desc: '注册可通过“稳定AI账号一键授权”获取用户 API 密钥的自有产品。',
+    desc: '注册可通过“稳定点AI账号一键授权”获取用户 API 密钥的自有产品。',
     create: '新建应用',
     fixedClientId:
       'Client ID（可选，仅新建时；桌面应用如 wd_wendingai_switch）',
@@ -239,11 +239,11 @@ const zhTW: typeof en = {
   nav: {
     authorizedApps: '已授權應用',
     oauthClients: '接入應用',
-    apps: '稳定應用',
+    apps: '稳定点應用',
   },
   oauth: {
     ...zhCN.oauth,
-    brand: '稳定AI帳號一鍵授權',
+    brand: '稳定点AI帳號一鍵授權',
     requestTitle: '{{app}} 請求連接你的帳號',
     allow: '授權',
   },

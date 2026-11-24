@@ -1,6 +1,14 @@
-# HANDOFF – 稳定AI账号一键授权 (Wending OAuth) + standalone frontend
+# HANDOFF – 稳定点AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-19 16:55 EST – production = `wending` fa32c8e on api.wending.ai (backend restarted 2026-11-19 21:47 UTC) and go.wending.ai (dpl_GCaVwXPVKwp1RQgsaZ42GQRaUU2S)._
+_Last updated: 2026-11-24 04:01 EST – display brand 稳定AI → 稳定点AI; production still `wending` 1ac9f5a until the new binary is installed. DB options already show 稳定点AI · wending.ai (2026-11-24 03:55 EST backup `/root/brand-backup-20261124-0355ET`). api5.wending.ai routing was left unchanged._
+
+## This stage — 2026-11-24: display brand 稳定AI → 稳定点AI (branch `rebrand/wendingdian-ai-2026-11-24`)
+
+- Follows production `wending` **1ac9f5a** (PR #14, the 稳定AI frontend rebrand). Hard-coded UI copy, SEO/OG/Twitter meta, `robots.txt`, default system name, shop labels, and OAuth strings (`稳定AI账号一键授权`, `使用稳定AI账号登录`, sidebar group `稳定应用` → `稳定点应用`) now say **稳定点AI**. i18n programmatic keys and code identifiers were not renamed; source-string keys such as `稳定点AI Shop` were updated together with `t(...)` callers.
+- DB options were already updated (no restart) earlier the same morning: `SystemName` / footer / about / announcement / legal brand lines, plus the huabu OAuth client description. See `/root/brand-backup-20261124-0355ET/`.
+- **api5.wending.ai**: Caddy block, DNS and routing were not changed. If it still proxies the same new-api process it will pick up the new binary automatically.
+- Production binary, version string, sha256, backup path and live checks: filled in after deploy (see the production record that follows this section once the install is done).
+- Rollback of the upcoming binary: reinstall the pre-deploy `.bak` and `systemctl restart new-api`. DB option rollback is the csv/dump in `/root/brand-backup-20261124-0355ET/` (not needed for a binary-only rollback).
 
 ## Production deployment record — 2026-11-19 21:28–21:48 UTC (PR #8 remove landing shell, logo/name options, fa32c8e)
 

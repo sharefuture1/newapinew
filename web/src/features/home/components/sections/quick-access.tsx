@@ -91,7 +91,7 @@ export function QuickAccess() {
           >
             <CardBody
               icon={<ShoppingBag className='size-5' />}
-              title={t('稳定AI Shop')}
+              title={t('稳定点AI Shop')}
               description={t('Plans, credits and AI services in one store.')}
               action={t('Visit shop')}
             />

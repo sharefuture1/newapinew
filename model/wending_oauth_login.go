@@ -1,7 +1,7 @@
 package model
 
 // Wending OAuth "login" scope: sign in to a first-party product with a
-// 稳定AI account WITHOUT creating an API key. The authorization code is
+// 稳定点AI account WITHOUT creating an API key. The authorization code is
 // exchanged for a short-lived opaque access token (prefix wdat_, only its
 // SHA-256 is stored) that is good for /api/oauth/userinfo only.
 //

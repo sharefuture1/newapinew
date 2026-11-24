@@ -37,7 +37,7 @@ vi.mock('@/hooks/use-status', () => ({
 }))
 vi.mock('@/hooks/use-system-config', () => ({
   useSystemConfig: () => ({
-    systemName: '稳定AI',
+    systemName: '稳定点AI',
     logo: '/logo.png',
     footerHtml: config.footerHtml,
     demoSiteEnabled: false,
@@ -88,7 +88,7 @@ describe('site footer', () => {
     expect(footer?.querySelector('img')?.getAttribute('onerror')).toBeNull()
   })
 
-  it('uses the 稳定AI tagline instead of the generic upstream one', async () => {
+  it('uses the 稳定点AI tagline instead of the generic upstream one', async () => {
     config.footerHtml = ''
     await renderFooter()
 
