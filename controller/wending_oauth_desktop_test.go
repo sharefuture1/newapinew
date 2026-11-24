@@ -135,7 +135,7 @@ func TestWendingDeviceGrantsAreIndependent(t *testing.T) {
 	var tokens []model.Token
 	require.NoError(t, model.DB.Where("user_id = ?", env.userId).Order("id").Find(&tokens).Error)
 	require.Len(t, tokens, 2)
-	require.Equal(t, "授权:稳定AI 创作台 · MacBook Pro", tokens[0].Name)
+	require.Equal(t, "授权:稳定点AI 创作台 · MacBook Pro", tokens[0].Name)
 	require.LessOrEqual(t, len(tokens[0].Name), 50)
 
 	// Web clients (no device id) still get their own single grant.
@@ -187,7 +187,7 @@ func TestWendingCreateClientWithFixedId(t *testing.T) {
 	env := setupWendingOAuthTest(t, true)
 	env.router.POST("/api/wending/oauth/clients", CreateWendingOAuthClient)
 	post := func(clientId string) (*httptest.ResponseRecorder, map[string]any) {
-		payload := map[string]any{"client_id": clientId, "name": "稳定AI Switch", "is_public": true, "enabled": true,
+		payload := map[string]any{"client_id": clientId, "name": "稳定点AI Switch", "is_public": true, "enabled": true,
 			"redirect_uris": []string{wendingLoopbackRegistered}, "default_remain_quota": 500000}
 		data, _ := common.Marshal(payload)
 		req := httptest.NewRequest(http.MethodPost, "/api/wending/oauth/clients", strings.NewReader(string(data)))

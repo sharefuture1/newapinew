@@ -17,13 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 /*
- * 稳定AI branding constants.
+ * 稳定点AI branding constants.
  * Modified by WendingAI (2026-11): this file is a WendingAI addition to the
  * upstream New API frontend (AGPLv3 §7(c) change marking).
  */
-export const WENDING_BRAND_NAME = '稳定AI'
+export const WENDING_BRAND_NAME = '稳定点AI'
 
-/** 稳定AI Shop (plans, credits and services). */
+/** 稳定点AI Shop (plans, credits and services). */
 export const WENDING_SHOP_URL = 'https://shop.wending.ai/'
 
 /** Public support channel shown in place of upstream issue links. */

@@ -185,7 +185,7 @@ func TestWendingLoginKeepsExistingAPIKey(t *testing.T) {
 func TestWendingClientTrustedFlagPersists(t *testing.T) {
 	env := setupWendingLoginTest(t, false)
 	require.NoError(t, applyWendingOAuthClientRequest(env.client, wendingOAuthClientRequest{
-		Name: "稳定AI Shop", RedirectUris: []string{wendingShopRedirect}, Enabled: true, Trusted: true,
+		Name: "稳定点AI Shop", RedirectUris: []string{wendingShopRedirect}, Enabled: true, Trusted: true,
 	}))
 	require.NoError(t, env.client.Save())
 	reloaded, err := model.GetWendingOAuthClientById(env.client.Id)

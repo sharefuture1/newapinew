@@ -314,7 +314,7 @@ export function NotificationPopover({
         }
       >
         <Bell className='size-[1.2rem]' aria-hidden='true' />
-        {/* 稳定AI: name the button from its content so the accessible name
+        {/* 稳定点AI: name the button from its content so the accessible name
             contains the visible unread count (WCAG 2.5.3 label in name). */}
         <span className='sr-only'>{t('Notifications')}</span>
         {unreadCount > 0 ? (

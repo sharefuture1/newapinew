@@ -1,4 +1,4 @@
-# 稳定AI
+# 稳定点AI
 User-agent: *
 Allow: /$
 Allow: /pricing

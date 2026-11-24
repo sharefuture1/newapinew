@@ -49,7 +49,7 @@ func setupWendingOAuthTest(t *testing.T, isPublic bool) *wendingOAuthTestEnv {
 		Status: common.UserStatusEnabled, Group: "default", Quota: 1000000, AffCode: "aff-alice", AuthVersion: 1}
 	require.NoError(t, db.Create(user).Error)
 
-	client := &model.WendingOAuthClient{Name: "稳定AI 创作台", IsPublic: isPublic, Enabled: true,
+	client := &model.WendingOAuthClient{Name: "稳定点AI 创作台", IsPublic: isPublic, Enabled: true,
 		DefaultRemainQuota: 500000, AllowUnlimitedQuota: true, ClientId: "wd_testclient000000000000"}
 	require.NoError(t, client.SetRedirectURIs([]string{wendingTestRedirect}))
 	secret, err := client.RotateSecret()
@@ -342,6 +342,6 @@ func TestWendingOAuthSidebarApps(t *testing.T) {
 	require.Len(t, apps, 2)
 	require.Equal(t, "earlier", apps[0].(map[string]any)["name"])
 	require.Equal(t, "https://earlier.example/", apps[0].(map[string]any)["launch_url"])
-	require.Equal(t, "稳定AI 创作台", apps[1].(map[string]any)["name"])
+	require.Equal(t, "稳定点AI 创作台", apps[1].(map[string]any)["name"])
 	require.Equal(t, "https://huabu.wending.ai/", apps[1].(map[string]any)["launch_url"])
 }

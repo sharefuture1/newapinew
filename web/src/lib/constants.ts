@@ -21,7 +21,7 @@ For commercial licensing, please contact support@quantumnous.com
  */
 
 // System Configuration Defaults
-export const DEFAULT_SYSTEM_NAME = '稳定AI'
+export const DEFAULT_SYSTEM_NAME = '稳定点AI'
 export const DEFAULT_LOGO = '/logo.png'
 
 // LocalStorage Keys

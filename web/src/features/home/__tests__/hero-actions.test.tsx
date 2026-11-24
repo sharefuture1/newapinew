@@ -70,15 +70,15 @@ async function renderHero(isAuthenticated: boolean) {
 describe('landing hero actions', () => {
   it('shows the site name as the wordmark', async () => {
     useSystemConfigStore.setState((state) => ({
-      config: { ...state.config, systemName: '稳定AI' },
+      config: { ...state.config, systemName: '稳定点AI' },
     }))
     await renderHero(false)
 
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      '稳定AI'
+      '稳定点AI'
     )
     useSystemConfigStore.setState((state) => ({
-      config: { ...state.config, systemName: '稳定AI' },
+      config: { ...state.config, systemName: '稳定点AI' },
     }))
   })
 
@@ -106,13 +106,13 @@ describe('landing hero actions', () => {
     )
   })
 
-  it('links to wallet top-up and the 稳定AI Shop', async () => {
+  it('links to wallet top-up and the 稳定点AI Shop', async () => {
     await renderHero(false)
 
     expect(
       screen.getByRole('button', { name: 'Wallet Top-up' })
     ).toHaveAttribute('href', '/wallet')
-    const shop = screen.getByRole('button', { name: '稳定AI Shop' })
+    const shop = screen.getByRole('button', { name: '稳定点AI Shop' })
     expect(shop).toHaveAttribute('href', 'https://shop.wending.ai/')
     expect(shop).toHaveAttribute('target', '_blank')
   })

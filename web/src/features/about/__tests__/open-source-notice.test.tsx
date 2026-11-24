@@ -33,7 +33,7 @@ vi.mock('../api', () => ({
   getAboutContent: vi.fn(async () => ({
     success: true,
     message: '',
-    data: '# 稳定AI',
+    data: '# 稳定点AI',
   })),
 }))
 
