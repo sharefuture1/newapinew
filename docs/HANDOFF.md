@@ -1,6 +1,6 @@
 # HANDOFF – 稳定点AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-24 05:15 EST – production = `wending` 3cbc840 (PR #16, frontend perf) on api.wending.ai, wendingai.future1.us, and go.wending.ai (dpl_GHYfvhJY5F57MG4d9zSzETR3Ys84, index.7ae97a00d4.js). Brand 稳定点AI · wending.ai. api5.wending.ai Caddy routing was left unchanged. wending-go is Git-linked to sharefuture1/newapinew, Production Branch `wending`._
+_Last updated: 2026-11-25 05:07 EST – request capture writes on vultr-sv are disabled (passthrough). Production frontend is still `wending` 3cbc840 (PR #16) on api.wending.ai, wendingai.future1.us, and go.wending.ai (dpl_GHYfvhJY5F57MG4d9zSzETR3Ys84, index.7ae97a00d4.js). Brand 稳定点AI · wending.ai. api5.wending.ai Caddy routing was left unchanged. wending-go is Git-linked to sharefuture1/newapinew, Production Branch `wending`._
 
 ## Dual frontend release process
 
@@ -10,6 +10,15 @@ Two surfaces serve the same `web/` app and can drift if they are not released to
 - **api.wending.ai** and **wendingai.future1.us** — the Go binary on vultr-sv (`//go:embed web/dist`). This does **not** follow Git. Ship it as an explicit release: `cd web && bun install --frozen-lockfile && bun run build`, then `CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/QuantumNous/new-api/common.Version=v1.0.0-rc.45-wending-<7-char-sha>"`, backup `/opt/new-api/new-api`, install, `systemctl restart new-api`. Do not change the api5.wending.ai Caddy block as part of a frontend release.
 - After both are out, confirm they serve the same bundle: `scripts/compare-frontend-hash.sh`. A mismatch means go moved ahead of the binary (or the other way around).
 - Rollback: Vercel — promote the previous production deployment of `wending-go`. Binary — reinstall the pre-deploy `.bak` and `systemctl restart new-api`.
+
+## This stage — 2026-11-25: disable request capture on vultr-sv
+
+- User direction (2026-11-25): turn off new-api request-body capture, same as api14's sub2api capture (disabled since 2026-11-16). The `request_captures` table and existing rows were kept.
+- api5.wending.ai still shares the capture proxy, so its Caddy block was **not** edited (still `reverse_proxy 127.0.0.1:52029 127.0.0.1:52030` with `lb_policy first`). `new-api-request-capture` stays running as a passthrough so that routing is unchanged.
+- api.wending.ai (both `reverse_proxy` targets in the `route`) and wendingai.future1.us now go straight to `127.0.0.1:52030`. Caddyfile backup: `/etc/caddy/Caddyfile.bak-20261125-0501ET`. `caddy validate` OK; restart at 05:01:46 EST (Caddy 2.6.2, admin off).
+- Capture proxy: installed a new binary that honors `REQUEST_CAPTURE_DISABLED=1` (pure passthrough; no Postgres connection, no body buffering, no inserts, no retention cleanup). Flag appended to `/opt/new-api/request-capture/env.conf`. Unit remains enabled/active. Backups: `/opt/new-api/request-capture/backups/disable-20261125-0501ET/` (previous binary sha256 `d45d11b797ff3d3589c0b78143144c5e8156dd6ce2541f9be275fb2aa8ad2f75`, new sha256 `8bfaf364b0b1cf7b07956007f6d961d8197592d2d360c97f311d631443164ca3`, plus the previous env.conf).
+- Verified 05:01–05:07 EST: `/api/status` 200 and the frontend page loads on api.wending.ai, api5.wending.ai, wendingai.future1.us, and go.wending.ai (go `/api` still proxies to api.wending.ai; both still serve `index.7ae97a00d4.js`, binary `v1.0.0-rc.45-wending-3cbc840`). Probe POSTs to `/v1/chat/completions` on all three API hosts (and directly on `:52029`) returned 401 and were not inserted. `request_captures` max(id) stayed **18792** / max(created_at) **2026-11-25 04:53:40 EST** (0 new rows after disable). No new-api or capture journal errors; Caddy log had no 5xx in that window.
+- Re-enable writes: remove `REQUEST_CAPTURE_DISABLED` from `/opt/new-api/request-capture/env.conf` (or set it to `0`), optionally restore the previous binary from the backup dir, then `systemctl restart new-api-request-capture`. To send api / future1 through the proxy again, restore `/etc/caddy/Caddyfile.bak-20261125-0501ET` (or put `127.0.0.1:52029` back as the first upstream on those two sites only), `caddy validate --config /etc/caddy/Caddyfile`, `systemctl restart caddy`. Leave the api5 block alone.
 
 ## This stage — 2026-11-24: frontend perf (branch `perf/frontend-2026-11-24`)
 
