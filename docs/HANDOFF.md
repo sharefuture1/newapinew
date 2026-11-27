@@ -1,6 +1,6 @@
 # HANDOFF – 稳定点AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-27 – selective upstream merge (`merge/upstream-2026-11-27`, 50 commits from QuantumNous/new-api on top of rc.45 + wending). Previous production: `wending` 3cbc840 (PR #16). Brand 稳定点AI · wending.ai. api5.wending.ai Caddy routing and the 52029 capture passthrough unchanged. wending-go is Git-linked to sharefuture1/newapinew, Production Branch `wending`._
+_Last updated: 2026-11-27 05:53 EST – production is `wending` 8c35150 (PR #17, selective upstream merge) on api.wending.ai, wendingai.future1.us, api5.wending.ai (same process) and go.wending.ai. Brand 稳定点AI · wending.ai. api5.wending.ai Caddy routing and the 52029 capture passthrough unchanged. wending-go is Git-linked to sharefuture1/newapinew, Production Branch `wending`._
 
 ## Dual frontend release process
 
@@ -10,6 +10,17 @@ Two surfaces serve the same `web/` app and can drift if they are not released to
 - **api.wending.ai** and **wendingai.future1.us** — the Go binary on vultr-sv (`//go:embed web/dist`). This does **not** follow Git. Ship it as an explicit release: `cd web && bun install --frozen-lockfile && bun run build`, then `CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/QuantumNous/new-api/common.Version=v1.0.0-rc.45-wending-<7-char-sha>"`, backup `/opt/new-api/new-api`, install, `systemctl restart new-api`. Do not change the api5.wending.ai Caddy block as part of a frontend release.
 - After both are out, confirm they serve the same bundle: `scripts/compare-frontend-hash.sh`. A mismatch means go moved ahead of the binary (or the other way around).
 - Rollback: Vercel — promote the previous production deployment of `wending-go`. Binary — reinstall the pre-deploy `.bak` and `systemctl restart new-api`.
+
+## Production deployment record — 2026-11-27 05:47–05:53 EST (PR #17 selective upstream merge, 8c35150)
+
+- PR https://github.com/sharefuture1/newapinew/pull/17 merged 05:47 EST as merge commit **8c351500c** (51 commits: 48 cherry-picks, 2 hand-ports, HANDOFF). CI: frontend job passed; backend job failed only on the known `./router` TestAccessTokenRouteRulesCoverEveryDashboardRoute (telegram miniapp route).
+- go.wending.ai: Git-triggered Vercel production deploy from 8c35150, https://vercel.com/sharefuture1s-projects/wending-go/AGiPpbtGQ1mfC2eakwyTkTbNS8qw (READY). Serves `index.cb304feea4.js`. The vultr-sv binary serves `index.f18055a485.js`: the only difference is minifier variable naming in the vchart chunk `39243` (Vercel build vs box build, both from the same frozen lockfile); `scripts/compare-frontend-hash.sh` will report drift for this release although the code is the same.
+- vultr-sv binary **`v1.0.0-rc.45-wending-8c35150`**, sha256 `d9c3bdea322b766b1df4c66c414cb8e37fd5ba5b81a24f2e6b77ef0f6547f481` (CGO_ENABLED=0, `-s -w`, go1.27.3, bun 1.4.4 `bun run build`). Staged `/opt/new-api/new-api.staged-8c35150`.
+- Backups: binary `/opt/new-api/new-api.bak-20261127-0551ET` (previous `v1.0.0-rc.45-wending-3cbc840`, sha256 `a0526bf0…486d3`); DB `/opt/new-api/db-backup-20261127-0551ET-pre-8c35150.dump` (pg_dump -Fc, 43 MB).
+- Deploy 05:52:25 EST: `install -m 0755`, `systemctl restart new-api`, local `/api/status` 200 after ~4 s (`ready in 3109 ms`). AutoMigrate created `idx_audit_time_event` on audit_logs. No errors in the journal.
+- Checks: `/api/status` 200 and home page 200 on api.wending.ai, wendingai.future1.us, api5.wending.ai, go.wending.ai (version `v1.0.0-rc.45-wending-8c35150`); unauthenticated `/v1/models` 401; a real client token got `GET /v1/models` 200 and its `POST /v1/chat/completions` was refused with 403 insufficient quota (same as before the deploy). Desktop 1280 and mobile 390 screenshots of go/api/future1 had no page errors (`/workspace/upstream-merge-shots/`).
+- Not changed: Caddy (incl. `unhealthy_status`), api5.wending.ai routing, the 52029 capture passthrough.
+- Rollback: `install -m 0755 /opt/new-api/new-api.bak-20261127-0551ET /opt/new-api/new-api && systemctl restart new-api` (the new audit index can stay). go: promote **dpl_GHYfvhJY5F57MG4d9zSzETR3Ys84** (3cbc840).
 
 ## This stage — 2026-11-27: selective upstream merge (branch `merge/upstream-2026-11-27`)
 
