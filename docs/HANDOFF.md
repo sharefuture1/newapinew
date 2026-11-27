@@ -1,6 +1,6 @@
 # HANDOFF – 稳定点AI账号一键授权 (Wending OAuth) + standalone frontend
 
-_Last updated: 2026-11-25 05:07 EST – request capture writes on vultr-sv are disabled (passthrough). Production frontend is still `wending` 3cbc840 (PR #16) on api.wending.ai, wendingai.future1.us, and go.wending.ai (dpl_GHYfvhJY5F57MG4d9zSzETR3Ys84, index.7ae97a00d4.js). Brand 稳定点AI · wending.ai. api5.wending.ai Caddy routing was left unchanged. wending-go is Git-linked to sharefuture1/newapinew, Production Branch `wending`._
+_Last updated: 2026-11-27 – selective upstream merge (`merge/upstream-2026-11-27`, 50 commits from QuantumNous/new-api on top of rc.45 + wending). Previous production: `wending` 3cbc840 (PR #16). Brand 稳定点AI · wending.ai. api5.wending.ai Caddy routing and the 52029 capture passthrough unchanged. wending-go is Git-linked to sharefuture1/newapinew, Production Branch `wending`._
 
 ## Dual frontend release process
 
@@ -10,6 +10,71 @@ Two surfaces serve the same `web/` app and can drift if they are not released to
 - **api.wending.ai** and **wendingai.future1.us** — the Go binary on vultr-sv (`//go:embed web/dist`). This does **not** follow Git. Ship it as an explicit release: `cd web && bun install --frozen-lockfile && bun run build`, then `CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/QuantumNous/new-api/common.Version=v1.0.0-rc.45-wending-<7-char-sha>"`, backup `/opt/new-api/new-api`, install, `systemctl restart new-api`. Do not change the api5.wending.ai Caddy block as part of a frontend release.
 - After both are out, confirm they serve the same bundle: `scripts/compare-frontend-hash.sh`. A mismatch means go moved ahead of the binary (or the other way around).
 - Rollback: Vercel — promote the previous production deployment of `wending-go`. Binary — reinstall the pre-deploy `.bak` and `systemctl restart new-api`.
+
+## This stage — 2026-11-27: selective upstream merge (branch `merge/upstream-2026-11-27`)
+
+- User direction (2026-11-27): take the important upstream fixes from QuantumNous/new-api, not a full merge. Base stays `v1.0.0-rc.45` + wending patches; upstream main was at `81c1fd20e` (rc.51 + 34), 155 commits ahead of our merge-base.
+- 50 commits: 48 clean cherry-picks (`-x`, upstream authors kept, committed by sharefuture1) + 2 hand-ports:
+  - `77436271f` DOMPurify 3.4.17 (GHSA-cg2g-xh64-v4q7): package.json/override bumped, `web/bun.lock` regenerated with bun on our dependency set.
+  - `1c63cc8c9` request-triggered errors no longer disable channels: upstream code used moego `ojson`; our `relay/common/override.go` still uses `gjson`, so the `compareNumeric` hunk was rewritten against `gjson.Result`.
+- Themes: auth/security (deleted-user keys 401, Redis auth cache MAC integrity, Redis cross-slot, query credentials hidden in access logs, zstd request decode cap, MaskSensitiveInfo complexity, Go 1.26.10 CVE, go-jose 4.1.6, vchart tooltip, 2FA lockout counter, OAuth inviter); billing/cache (Claude cache writes without 5m/1h split, cache_creation in prompt_tokens_details, OpenAI 12h cache writes, Gemini embedding usage, xAI stream usage); stability (Responses streams without false disconnects, slow clients on large stream events, bare `[DONE]`, Claude keepalive during prepare/retry, affinity fallback from top priority, manual disable kept, multi-key restore, batch tag in tx, Redis limiter script recovery, notify window, Vertex token cache, param-override regex cache); model compatibility (GPT-6.1/6.2 param rules, Gemini 4 thinking levels, DeepSeek developer role / Responses reasoning / CNY wallet, Claude/Gemini tool-call conversions, gpt-image-2.6).
+- Skipped on purpose: rc.50 plugin marketplace / provider + request plugins (`7b857f5a1` and everything that depends on it, incl. sensitive-word option migration and node sync), moego/moejs JSON + WebP swap (`f3d8b737b`, `70e6af642`, `185e1e51a`, `b2d12187a`; rc.50 SIGILL on non-AVX CPUs), pricing-square sort/private-group/tier display and sidebar/marketplace frontend changes (conflict with our per-1K pricing and wending sidebar), task-plugin fixes that need the plugin base (incl. `590042682`, whose test needs a prerequisite), Epay RSA, dependabot web bumps, docs.
+- DB: only AutoMigrate of a new composite index `idx_audit_time_event` on `audit_logs` (prod had 2268 rows / 2.2 MB on 2026-11-27). No option keys added or removed. vultr-sv has no Redis, so the Redis auth-cache format change has no effect there.
+- Tests (2026-11-27): `go build ./...` OK; `go test ./...` only the two known failures (`./router` TestAccessTokenRouteRulesCoverEveryDashboardRoute — telegram miniapp route; `relay/channel/advancedcustom` TestAdaptorMasksDialedHostsInDialFailure); `relaykit` module tests OK; web `tsgo -b` OK, `vitest` 208 files / 2410 tests passed.
+- Deploy: go.wending.ai auto-deploys from the merge commit (web/ changed: DOMPurify, vchart, pricing editor/usage-log details). vultr-sv binary released separately; api5 / 52029 capture passthrough and Caddy unchanged. Production record below.
+
+Commits:
+
+- `056b02483` fix(notify): keep notification limit window from resetting every hour (#7877)
+- `3f1154408` fix(audit): add composite index for audit log ordering (#7874)
+- `18e84c33a` fix(relay): Claude 流式请求在准备和重试期间持续保活 (#7857)
+- `fcd9715b7` fix(relaykit): keep tool calls when merging adjacent assistant messages for Claude (#7921)
+- `147c52991` fix(limiter): recover redis script after flush (#6486)
+- `6bbc67e77` fix: fall back to CNY when DeepSeek USD wallet is zero (#7917)
+- `1eded3b5c` fix: upgrade Go to 1.26.10 for CVE-2026-111943 (#7942)
+- `3fd56ed3b` fix(relay): finish delivered Responses streams without false disconnect errors (#7956)
+- `abd28c729` fix(relay): stop cutting off slow clients during large stream events
+- `919fcb385` fix(billing): bill Claude cache writes that arrive without a 5m/1h split
+- `20c0f443d` fix(relay): keep the client's JSON Schema property order
+- `4c3a8da76` feat(billing): bill OpenAI 12-hour prompt cache writes at their own price (#7965)
+- `15eb67698` fix(logging): 隐藏访问日志中的查询凭据 (#7972)
+- `e02d73711` fix(gemini): preserve top-level imageConfig in chat conversion
+- `3b27502d5` fix(billing): bill cache_creation_input_tokens reported in prompt_tokens_details (#7909)
+- `e08c8a83e` fix:修复stop为非字符串和[]string的协议转换问题 (#7935)
+- `ff7b2e47e` fix(relaykit): preserve tool argument numbers in Claude responses (#7996)
+- `b90eea52d` fix(relaykit): preserve Gemini text alongside tool calls (#7998)
+- `18a7f2f68` perf(relay): stop recompiling param override regexes on every request (#8061)
+- `1a54534d2` fix(relay): apply GPT-6 chat parameter rules to gpt-6.1-sol and gpt-6.1-terra (#8064)
+- `e05c98ff6` fix: count completed non-stream relays after context cancellation (#7844)
+- `011796347` fix(relay): terminate streams on exact bare done markers (#8074)
+- `52ad46bf8` fix: start affinity fallback at the highest channel priority (#8078)
+- `c77b77c35` Merge commit from fork
+- `54c9e1d69` Merge commit from fork
+- `1963785cc` Merge commit from fork
+- `6fac51f44` fix(logger): keep gin access and recovery logs on the current log file after rotation (#8098)
+- `6edca7195` chore(deps): bump github.com/go-jose/go-jose/v4 from 4.1.4 to 4.1.6 (#8112)
+- `c4c138dc2` fix(xai): preserve token details in stream usage conversion (#6420)
+- `746322445` fix(twofa): restart the failure count after a lockout expires (#8172)
+- `be7dafa64` fix(gemini): bill embeddings from upstream usageMetadata (#8182)
+- `de8ccbfcf` fix(auth): 校验 Redis 鉴权缓存完整性 (#8200)
+- `4750eb29c` feat: forward image complexity and markup for gpt-image-2.6 (#8208)
+- `f32cbb87c` fix(cache): 修复用户和令牌缓存的 Redis 跨槽错误 (#8218)
+- `17cbdca34` fix(vertex): cache service-account access tokens until they expire
+- `8a73f5135` fix(channel): restore a multi-key channel when a key is enabled after all keys failed
+- `fbc33d5bb` fix(channel): keep a manual channel disable when a request fails
+- `dada7c0e7` feat(deepseek): 补全 Responses 工具历史缺失的 reasoning (#8162)
+- `dfcf026db` fix(oauth): persist inviter when creating OAuth users (#8247)
+- `5c1a03733` fix(deepseek): map developer role to system for chat completions (#8287)
+- `6106d2b45` fix(relaykit): join Gemini text parts verbatim in chat responses (#8136)
+- `c728dbcde` fix(relay): apply GPT-6 chat parameter rules to gpt-6.2-astra and gpt-6.2-sol (#8375)
+- `9eebe6e1b` fix(auth): reject API keys of deleted users with 401 (#8381)
+- `7bdcc689a` fix(relaykit): report cached tokens in Gemini usageMetadata built from chat usage (#8333)
+- `e0f2aa30f` feat(gemini): add Argon fields and reasoning mappings (#8177)
+- `88ccb272d` fix(relaykit): map Gemini 4 thinking levels per model (#8367)
+- `75c146ff9` fix(relaykit): match Gemini 4 thinking levels by family prefix (#8412)
+- `061db8ed2` fix(channel): read batch tag changes within the transaction
+- `74a49d4ff` fix(deps): upgrade DOMPurify to 3.4.17 (hand-port of upstream #8116)
+- `ef2f80ec4` fix(relay): keep request-triggered errors from disabling channels (#8345)
 
 ## This stage — 2026-11-25: disable request capture on vultr-sv
 
